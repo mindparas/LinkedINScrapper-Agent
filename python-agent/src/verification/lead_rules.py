@@ -13,8 +13,8 @@ DISQUALIFIED_INTERMEDIARY_KEYWORDS = [
 ]
 
 GENUINE_FOUNDER_TITLES = [
-    "founder", "co-founder", "cofounder", "ceo", "cto",
-    "chief technology officer", "chief executive officer",
+    "founder", "co-founder", "cofounder", "ceo", "cto", "coo",
+    "chief technology officer", "chief executive officer", "chief operating officer",
     "vp of engineering", "vp engineering", "head of engineering", "head of product"
 ]
 

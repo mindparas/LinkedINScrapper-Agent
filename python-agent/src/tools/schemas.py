@@ -8,18 +8,18 @@ AGENT_TOOLS = [
         "type": "function",
         "function": {
             "name": "execute_search",
-            "description": "Execute a LinkedIn content search using natural unquoted intent keywords and freshness window.",
+            "description": "Execute a LinkedIn content search using high-intent founder keywords anchored to US Tech Hubs (e.g. 'San Francisco', 'Austin', 'NYC') or US Accelerators ('YC', 'Techstars').",
             "parameters": {
                 "type": "object",
                 "properties": {
                     "query": {
                         "type": "string",
-                        "description": "Natural, high-intent search keywords WITHOUT unnecessary double quotes. Examples: 'building MVP custom software', 'hiring founding engineer AI startup', 'seed stage looking for software developers'. NEVER put 'United States' or 'USA' in the query."
+                        "description": "High-intent search query. MUST incorporate at least one US Lead Magnet: 1) US Tech Hub (e.g. '\"San Francisco\" \"founding engineer\"', '\"Austin\" \"founding engineer\"', '\"NYC\" \"first engineer\"'), 2) US Accelerators (e.g. 'YC \"founding engineer\" hiring', '\"Techstars\" \"founding engineer\"'), or 3) US Hiring constraints ('\"US only\" \"founding engineer\"'). Use double quotes around exact multi-word cities or compound titles. NEVER put generic 'United States' or 'USA' in the query box as that yields 0 founder posts."
                     },
                     "freshness": {
                         "type": "string",
                         "enum": ["past-24h", "past-week"],
-                        "description": "Freshness window ('past-24h' for ultra-fresh posts, 'past-week' for broader reach)."
+                        "description": "Freshness window ('past-24h' or 'past-week'). Favor 'past-week' when running during non-US business hours to capture active US founder posts from the week."
                     },
                     "target_objective": {
                         "type": "string",

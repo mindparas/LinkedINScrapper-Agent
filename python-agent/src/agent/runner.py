@@ -48,40 +48,72 @@ def run_autonomous_agent(driver, niche, target_limit, exporter, memory, logger):
             for item in recent_executions
         ]) + "\n\n"
 
+    # Dynamic US Time Context (UTC-5 EST / UTC-8 PST)
+    now_utc = datetime.utcnow()
+    est_hour = (now_utc.hour - 5) % 24
+    pst_hour = (now_utc.hour - 8) % 24
+    is_us_night = (est_hour < 8 or est_hour >= 23)
+
+    us_time_guidance = (
+        f"- CURRENT US TIME: ~{est_hour:02d}:00 EST / ~{pst_hour:02d}:00 PST ({'NIGHT/OFFLINE in USA' if is_us_night else 'ACTIVE US BUSINESS HOURS'}).\n"
+        f"  * Since active US founders are currently {'offline/asleep' if is_us_night else 'active'}, you SHOULD favor 'past-week' freshness to surface high-value posts from earlier in the week.\n"
+        f"  * Avoid 'past-24h' during US nighttime as global feeds will be dominated by Asian/European candidates.\n\n"
+    )
+
     system_prompt = f"""You are an elite, fully autonomous Business Development Executive (BDE) AI Agent discovering prospective client leads on LinkedIn.
 AGENCY SERVICE / NICHE: {niche}
 TARGET GEOGRAPHY: United States ONLY (User is working remotely from India; you must strictly eliminate India, Pakistan, UK, and international leads).
 ROLE RESTRICTION: Absolutely NO HR managers, recruiters, staffing agencies, bench sales reps, job seekers, OR INTERMEDIARIES (VCs, investors, accelerators, media curators).
-IDEAL CLIENTS: Authentic direct decision-makers (Founders, Co-Founders, CEOs, CTOs, VPs of Engineering) of their own software/AI startup who are building an MVP or hiring founding engineers.
+IDEAL CLIENTS: Authentic direct decision-makers (Founders, Co-Founders, CEOs, CTOs, COOs, VPs of Engineering) of their own software/AI startup who are building an MVP or hiring founding engineers.
 
 SESSION PERSISTENT CONTEXT & ISOLATED CSV:
 - Current Session CSV: {exporter.csv_path} (Mirrored to: {exporter.current_csv_path})
 - Current Session Leads Collected: {len(exporter.leads)} (Session starts fresh with 0 previous leads)
-{feedback_section}{history_section}CRITICAL OPERATIONAL INSTRUCTIONS:
-1. FULL AUTONOMOUS QUERY FORMULATION (NO CANNED OR PREDEFINED QUERIES):
-   - You must autonomously formulate and engineer your own search queries from first principles based on '{niche}'.
-   - Do NOT expect or look for canned/predefined query lists. Use your intelligence to deduce what high-intent startup founders building '{niche}' post on LinkedIn.
-   - Combine intent phrases (e.g. seeking founding technical help, building prototypes, launching MVPs, hiring technical cofounders) tailored dynamically to '{niche}'.
-   - STRICT PROHIBITION ON REDUNDANT DOUBLE QUOTES:
-     * Never enclose search phrases or keywords in double quotes by default! Verbatim quotes restrict search and return 0 results. Use natural unquoted keywords.
-   - NEVER put "United States" or "USA" in the LinkedIn content search box! That requires the literal words in post body and yields 0 results. Instead, verify the author's USA location when inspecting their profile top-card.
-   - CONTINUOUS LEARNING FROM LIVE OUTCOMES:
-     * Review your actual recent execution log above.
-     * If a previous query returned 0 cards or yielded 0 qualified leads, analyze why and autonomously synthesize a fresh, different query angle!
-2. COGNITIVE REASONING & STRATEGY TRANSPARENCY:
+{feedback_section}{history_section}{us_time_guidance}CRITICAL OPERATIONAL INSTRUCTIONS & USA-ONLY SENSING STRATEGY:
+1. THE 3 MANDATORY USA LEAD MAGNETS (EMPIRICAL TRUTH):
+   LinkedIn content search has NO native country filter. Generic phrases like "building AI MVP team" or "AI startup hiring engineers" match globally and return 90%+ international candidates (India, Africa, Vietnam, Poland).
+   To guarantee high-yield USA leads, EVERY query you synthesize MUST incorporate at least one of these 3 US Lead Magnets:
+   a) US Tech Hub Anchoring:
+      Pair founder intent with specific US metro hubs:
+      - "San Francisco" "founding engineer"
+      - "Austin" "founding engineer"
+      - "NYC" "first engineer"
+      - "Bay Area" "building MVP"
+      - "Seattle" "stealth AI"
+   b) US Startup Accelerators:
+      Anchor with top US accelerator batches (95%+ US presence):
+      - YC "founding engineer" hiring
+      - "Techstars" "founding engineer"
+      - "South Park Commons" hiring
+   c) US Hiring Constraints & Timezones:
+      - "US only" "founding engineer"
+      - "US work authorization" "founding engineer"
+      - "EST" OR "PST" "first engineer"
+
+2. EXACT PHRASE QUOTING RULES:
+   - Enclose exact multi-word cities or compound titles in double quotes: "San Francisco", "Austin", "founding engineer", "first engineer", "US only".
+   - Do NOT quote single generic words like engineer or startup (leave unquoted for stem matching).
+   - NEVER wrap full sentences in quotes.
+   - NEVER put "United States" or "USA" in the query box (it yields 0 results because real US founders don't write "USA").
+
+3. COGNITIVE REASONING & STRATEGY TRANSPARENCY:
    - For EVERY execute_search call, you must explicitly articulate:
      * target_objective: Exactly what prospective client persona or goal you want to achieve with this search.
-     * query: The natural unquoted search keywords you autonomously synthesized.
+     * query: The US-anchored search keywords you autonomously synthesized.
      * query_rationale: Strategic reason why these specific keywords were selected for '{niche}'.
      * feasibility_analysis: Will this query achieve the objective, what posts will it attract, and why will it avoid noise and recruiters?
      * developer_feedback_alignment: Explicitly how this query strictly obeys and incorporates all developer feedback.
-3. DEVELOPER DIRECTIVES ARE TOP PRIORITY:
+
+4. DEVELOPER DIRECTIVES ARE TOP PRIORITY:
    - Always prioritize and strictly obey any developer feedback, guidance, or critique provided. Never repeat a behavior or query that the developer criticized.
-4. EARLY FEED BAILOUT:
-   - If 2 consecutive cards in a search result fail USA qualification or belong to recruiters/freelancers, STOP scrolling that feed immediately! Formulate an improved query autonomously.
-5. DEEP PROFILE LOCATION VERIFICATION:
+
+5. EARLY FEED BAILOUT:
+   - If 2 consecutive cards in a search result fail USA qualification or belong to recruiters/freelancers, STOP scrolling that feed immediately! Formulate an improved query autonomously targeting a different US tech hub or accelerator.
+
+6. DEEP PROFILE LOCATION VERIFICATION:
    - Inspect profile top-card for 100% US presence before qualifying.
-6. SINGLE CSV ACCUMULATION:
+
+7. SINGLE CSV ACCUMULATION:
    - All leads qualified during this session are saved to {exporter.csv_path}. Once you find a lead, the user will be prompted to continue or finish."""
 
     starting_leads_count = len(exporter.leads)
@@ -89,7 +121,7 @@ SESSION PERSISTENT CONTEXT & ISOLATED CSV:
 
     messages = [
         {"role": "system", "content": system_prompt},
-        {"role": "user", "content": f"Begin autonomous campaign. Current session CSV: '{exporter.csv_path}'. Goal: Discover genuine verified USA decision-maker leads for '{niche}'. Currently {starting_leads_count} leads in this session. Analyze the niche, autonomously formulate your own unique search query from first principles (WITHOUT unnecessary quotes), state your complete cognitive reasoning, and execute search."}
+        {"role": "user", "content": f"Begin autonomous campaign. Current session CSV: '{exporter.csv_path}'. Goal: Discover genuine verified USA decision-maker leads for '{niche}'. Currently {starting_leads_count} leads in this session. Apply the 3 US Lead Magnets (US Tech Hubs, US Accelerators, or US hiring constraints), state your complete cognitive reasoning, and execute search."}
     ]
 
     is_finished = False

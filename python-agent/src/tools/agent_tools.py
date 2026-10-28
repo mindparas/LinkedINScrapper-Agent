@@ -48,6 +48,7 @@ class LinkedInAgentTools:
         self.skipped_count = 0
         self.cards_on_current_query = 0
         self.qualified_on_current_query = 0
+        self.consecutive_non_usa_count = 0
 
     @property
     def current_expected_output(self):
@@ -85,6 +86,7 @@ class LinkedInAgentTools:
         self.scroll_count_on_query = 0
         self.cards_on_current_query = 0
         self.qualified_on_current_query = 0
+        self.consecutive_non_usa_count = 0
         clean_q = clean_linkedin_boolean_query(query)
         self.current_query = clean_q
         self.current_freshness = freshness if freshness in ["past-24h", "past-week"] else "past-24h"
@@ -386,6 +388,14 @@ class LinkedInAgentTools:
 
             # Analyze with our strict US parser
             is_usa, reason = is_verified_usa_location(exact_location)
+            if is_usa:
+                self.consecutive_non_usa_count = 0
+                obs = f"Visited profile {author_url}. Exact top-card location: '{exact_location}'. Confirmed USA: {is_usa} ({reason})."
+            else:
+                self.consecutive_non_usa_count += 1
+                obs = f"Visited profile {author_url}. Exact top-card location: '{exact_location}'. Confirmed USA: {is_usa} ({reason})."
+                if self.consecutive_non_usa_count >= 2:
+                    obs += f"\n🚨 EARLY BAILOUT ALERT: {self.consecutive_non_usa_count} consecutive cards in this search are from non-US/international locations! This feed is globally contaminated. STOP scrolling this feed immediately and execute a new search query targeting a specific US Metro (e.g. 'San Francisco', 'Austin', 'NYC') or US accelerator ('YC')."
 
             self.logger.info(f"Profile verification for {author_url}: Location='{exact_location}', Confirmed USA={is_usa} ({reason}, method={profile_info.get('method')})")
             print(f"      📍 Profile Top-Card Extracted: '{exact_location}' -> Confirmed USA: {is_usa} ({reason})")
@@ -395,7 +405,7 @@ class LinkedInAgentTools:
                 "exact_location": exact_location or "Location not specified on profile top-card",
                 "is_usa_verified": is_usa,
                 "verification_reason": reason,
-                "observation": f"Visited profile {author_url}. Exact top-card location: '{exact_location}'. Confirmed USA: {is_usa} ({reason})."
+                "observation": obs
             }
 
         except Exception as e:
@@ -537,6 +547,14 @@ class LinkedInAgentTools:
 
         body_text = self.driver.find_element(By.TAG_NAME, "body").text
         at_end = "No more results" in body_text or "You've viewed all" in body_text
+
+        if self.consecutive_non_usa_count >= 2:
+            return {
+                "total_cards_in_dom": total_cards,
+                "scroll_count": self.scroll_count_on_query,
+                "at_end_of_feed": at_end,
+                "observation": f"🚨 FEED BAILOUT TRIGGERED: Feed has {self.consecutive_non_usa_count} consecutive international non-US cards! Scrolling further on this query is unproductive. Immediately execute a new search query anchored with a US Tech Hub (e.g. 'San Francisco', 'Austin', 'NYC') or US Accelerator ('YC')."
+            }
 
         return {
             "total_cards_in_dom": total_cards,

@@ -16,8 +16,12 @@ US_STATES = [
 US_METROS = [
     "san francisco bay area", "greater new york city area", "greater seattle area",
     "greater boston", "greater chicago area", "dallas-fort worth metroplex",
-    "greater los angeles area", "silicon valley", "austin", "seattle", "san jose",
-    "chicago", "denver", "miami", "boston"
+    "greater los angeles area", "greater houston", "houston", "silicon valley",
+    "austin", "seattle", "san jose", "chicago", "denver", "miami", "boston",
+    "dallas", "fort worth", "atlanta", "san diego", "salt lake city",
+    "raleigh", "durham", "research triangle", "washington dc", "washington, d.c.",
+    "pittsburgh", "nashville", "tampa", "orlando", "minneapolis", "boulder", "portland",
+    "phoenix", "philadelphia"
 ]
 
 STATE_CODE_REGEX = re.compile(
