@@ -1,0 +1,85 @@
+{
+  "generated_at": "2026-10-28T15:12:37.484771",
+  "target_limit": 1,
+  "qualified_leads_count": 1,
+  "skipped_cards_count": 20,
+  "total_turns": 19,
+  "proven_successful_queries": [
+    {
+      "query": "\"building an MVP\"",
+      "freshness": "past-24h",
+      "yield_qualified": 2,
+      "notes": "Surfaces early-stage founders actively constructing prototypes and MVPs"
+    },
+    {
+      "query": "\"founding engineer\"",
+      "freshness": "past-24h",
+      "yield_qualified": 2,
+      "notes": "Surfaces startup leadership hiring their first technical pillars"
+    },
+    {
+      "query": "\"looking for software developers\" NOT (Recruiter OR Staffing)",
+      "freshness": "past-week",
+      "yield_qualified": 3,
+      "notes": "Surfaces direct hiring managers seeking dev capacity across the past week"
+    },
+    {
+      "query": "\"seed round\" hiring engineer",
+      "freshness": "past-24h",
+      "qualified_count": 1
+    },
+    {
+      "query": "\"stealth startup\" hiring \"engineer\"",
+      "freshness": "past-24h",
+      "qualified_count": 1
+    }
+  ],
+  "failed_queries": [
+    {
+      "query": "(\"Founder\") AND (\"United States\")",
+      "freshness": "past-24h",
+      "issue": "0 results - over-constrained with location keywords in search box",
+      "learned_rule": "Never include 'United States' or 'USA' in content search box because it requires the post body to literally contain the words 'United States'."
+    },
+    {
+      "query": "\"seed round\" hiring engineer",
+      "freshness": "past-24h",
+      "issue": "Cards extracted but 0 US leads qualified (Too broad/generic or international candidates)"
+    },
+    {
+      "query": "\"founding engineer\"",
+      "freshness": "past-24h",
+      "issue": "Cards extracted but 0 US leads qualified (Too broad/generic or international candidates)"
+    },
+    {
+      "query": "\"looking for a technical co-founder\"",
+      "freshness": "past-24h",
+      "issue": "Cards extracted but 0 US leads qualified (Too broad/generic or international candidates)"
+    },
+    {
+      "query": "\"looking for software developers\" NOT (Recruiter OR Staffing)",
+      "freshness": "past-week",
+      "issue": "Cards extracted but 0 US leads qualified (Too broad/generic or international candidates)"
+    },
+    {
+      "query": "\"seed round\" \"founding engineer\"",
+      "freshness": "past-week",
+      "issue": "Cards extracted but 0 US leads qualified (Too broad/generic or international candidates)"
+    },
+    {
+      "query": "\"stealth startup\" hiring \"engineer\"",
+      "freshness": "past-week",
+      "issue": "Cards extracted but 0 US leads qualified (Too broad/generic or international candidates)"
+    },
+    {
+      "query": "stealth startup hiring engineer",
+      "freshness": "past-week",
+      "issue": "Cards extracted but 0 US leads qualified (Too broad/generic or international candidates)"
+    },
+    {
+      "query": "stealth startup \"founding engineer\"",
+      "freshness": "past-week",
+      "issue": "Cards extracted but 0 US leads qualified (Too broad/generic or international candidates)"
+    }
+  ]
+}

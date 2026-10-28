@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>LinkedIn Post Scraper</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+
+  <!-- ⚠️ Risk Warning Banner (auto-dismisses in 6s) -->
+  <div id="risk-warning" class="risk-banner">
+    <span>⚠️ This extension may violate LinkedIn's Terms of Service. Excessive use may result in your account being restricted. <strong>Use responsibly.</strong></span>
+  </div>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-brand">
+      <img src="icons/icon48.png" alt="Logo" class="logo" />
+      <h1>LinkedIn Post Scraper</h1>
+    </div>
+    <div class="header-controls">
+      <button id="open-window-btn" class="header-icon-btn" type="button" title="Open in Pop-out Window (Never closes when clicking away)">↗️ Pop Out</button>
+      <button id="open-sidepanel-btn" class="header-icon-btn" type="button" title="Open in Chrome Side Panel (Stays docked to right)">📌 Side Panel</button>
+    </div>
+  </div>
+
+  <!-- Filter Form -->
+  <div class="form-section">
+
+    <!-- Keyword Input -->
+    <div class="field">
+      <label for="keyword">🔍 Keyword</label>
+      <input
+        type="text"
+        id="keyword"
+        placeholder="e.g. Hiring AI Developer"
+        autocomplete="off"
+      />
+    </div>
+
+    <!-- Location Filter -->
+    <div class="field">
+      <label for="location">📍 Location</label>
+      <select id="location">
+        <option value="103644278" selected>🇺🇸 USA (Default)</option>
+      </select>
+    </div>
+
+    <!-- Sort Filter -->
+    <div class="field">
+      <label for="sortby">🕐 Filter By</label>
+      <select id="sortby">
+        <option value="relevance" selected>🎯 Most Relevant (High Intent)</option>
+        <option value="date_posted">⏱ Latest Posts</option>
+      </select>
+    </div>
+
+    <!-- 📝 Post Type Filter: Organic Human Posts vs Job Cards -->
+    <div class="field">
+      <label for="post-type">📝 Post Type</label>
+      <select id="post-type">
+        <option value="organic" selected>📝 Organic Posts Only (Skip Job Cards)</option>
+      </select>
+    </div>
+
+    <!-- 🎯 Post Limit: Target number of posts to scrape -->
+    <div class="field">
+      <label for="post-limit">🎯 Target Leads (How many to scrape)</label>
+      <div class="limit-row">
+        <select id="post-limit">
+          <option value="10" selected>10 Leads (Quick & Safe - ~1 min)</option>
+          <option value="25">25 Leads (Standard - ~2-3 min)</option>
+          <option value="50">50 Leads (Deep Search - ~4-5 min)</option>
+          <option value="100">100 Leads (Bulk Run)</option>
+          <option value="custom">✏️ Custom Count...</option>
+        </select>
+        <input
+          type="number"
+          id="custom-limit"
+          class="hidden"
+          min="1"
+          max="300"
+          value="15"
+          placeholder="e.g. 15"
+        />
+      </div>
+    </div>
+
+    <!-- 🤖 AI Smart Filter Section -->
+    <div class="field ai-section">
+      <div class="ai-toggle-row">
+        <label for="ai-toggle">🤖 AI Lead Qualification Engine</label>
+        <input type="checkbox" id="ai-toggle" checked />
+      </div>
+      <div id="ai-key-container" class="ai-key-container">
+        <div style="margin-bottom: 6px;">
+          <select id="ai-provider" style="width: 100%; font-size: 11.5px; padding: 6px 8px; border-radius: 5px; border: 1px solid #86efac; background: white; color: #1e293b; font-weight: 500;">
+            <option value="openai" selected>🟢 OpenAI (gpt-4o-mini)</option>
+          </select>
+        </div>
+        <input
+          type="password"
+          id="ai-key"
+          placeholder="Paste OpenAI API Key (sk-...)"
+          autocomplete="off"
+        />
+        <span id="ai-hint" class="ai-hint">Requires <a href="https://platform.openai.com/api-keys" target="_blank">OpenAI API key</a> (<code>gpt-4o-mini</code>) for deep BDE qualification.</span>
+      </div>
+    </div>
+
+    <!-- 🎯 BDE Sales Lead Mode Section -->
+    <div class="field bde-section">
+      <div class="bde-toggle-row">
+        <label for="bde-toggle">💼 BDE Sales Mode (Block Bench / Vendors)</label>
+        <input type="checkbox" id="bde-toggle" checked />
+      </div>
+      <span class="bde-hint">Filters out bench sales recruiters & hotlists. Keeps only direct employers, founders, CTOs & verified hiring leads.</span>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="action-buttons-row">
+      <button id="scrape-btn" class="btn-primary">
+        <span id="btn-text">🚀 Scrape Posts</span>
+        <span id="btn-loader" class="hidden">⏳ Scraping...</span>
+      </button>
+      <button id="cancel-btn" class="btn-cancel hidden" type="button" title="Stop scraping and keep all leads found so far">
+        <span>🛑 Stop / Keep Leads</span>
+      </button>
+      <button id="inspect-dom-btn" class="btn-secondary" type="button">
+        <span>🔬 Inspect Live DOM</span>
+      </button>
+    </div>
+
+  </div>
+
+  <!-- Progress Bar -->
+  <div id="progress-wrap" class="hidden">
+    <div class="progress-label">
+      <span id="progress-text">Fetching posts...</span>
+      <span id="progress-count">0 / 10</span>
+    </div>
+    <div class="progress-bar">
+      <div id="progress-fill" class="progress-fill"></div>
+    </div>
+  </div>
+
+  <!-- Results Section -->
+  <div id="results-section" class="hidden">
+
+    <!-- Results Header -->
+    <div class="results-header">
+      <span id="results-summary"></span>
+      <button id="download-btn" class="btn-download">⬇️ Download CSV</button>
+    </div>
+
+    <!-- Posts List -->
+    <div id="posts-list" class="posts-list"></div>
+
+  </div>
+
+  <!-- Empty State -->
+  <div id="empty-state" class="hidden empty-state">
+    <p>😕 No relevant posts found.</p>
+    <p>Try a different keyword or location.</p>
+  </div>
+
+  <!-- Error State -->
+  <div id="error-state" class="hidden error-state">
+    <p>❌ <span id="error-message">Something went wrong.</span></p>
+  </div>
+
+  <!-- ─── Debug Panel ─────────────────────────────────── -->
+  <div id="debug-section" class="debug-section hidden">
+    <div class="debug-header">
+      <span>🛠️ Debug Log</span>
+      <div class="debug-actions">
+        <button id="raw-data-btn" class="btn-raw hidden">📋 Raw Data</button>
+        <button id="clear-log-btn" class="btn-clear">🗑 Clear</button>
+        <button id="toggle-debug-btn" class="btn-toggle">▲ Hide</button>
+      </div>
+    </div>
+    <div id="debug-log" class="debug-log"></div>
+  </div>
+
+  <!-- Raw Data Modal -->
+  <div id="raw-modal" class="raw-modal hidden">
+    <div class="raw-modal-header">
+      <span>📋 Raw Scraped Data (JSON)</span>
+      <button id="close-raw-btn" class="btn-close-raw">✕ Close</button>
+    </div>
+    <pre id="raw-data-content" class="raw-data-content"></pre>
+  </div>
+
+  <!-- Debug Toggle (always visible at bottom) -->
+  <div class="debug-toggle-bar">
+    <button id="open-debug-btn" class="btn-open-debug">🛠️ Debug Log</button>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

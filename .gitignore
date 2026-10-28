@@ -1,0 +1,44 @@
+# Python virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# Python cache & bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.bak
+
+# Environment variables & secrets (CRITICAL: Never commit API keys)
+.env
+.env.*
+!.env.example
+
+# Selenium & WebDriver caches
+.wdm/
+
+# Chrome User Profiles & Session data (contains live cookies and auth tokens)
+**/linkedin_chrome_profile/
+linkedin_chrome_profile/
+
+# Temporary / Debug dumps
+**/debug/
+*.log
+debug_card_dump.html
+copied_post_url.txt
+
+# Session Logs & Lead Exports (keep folders, ignore generated files)
+**/logs/*.log
+**/exports/*.csv
+**/exports/*.json
+!**/exports/.gitkeep
+!**/logs/.gitkeep
+
+# OS / Editor files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
