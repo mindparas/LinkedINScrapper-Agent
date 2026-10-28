@@ -1,6 +1,58 @@
 {
   "created_at": "2026-10-28T15:40:00.000000",
-  "execution_history": [],
+  "execution_history": [
+    {
+      "timestamp": "2026-10-28T16:12:34.519298",
+      "query": "building MVP custom software AI startup",
+      "freshness": "past-week",
+      "target_objective": "Genuine decision-makers in software/AI startups seeking MVP engineering support",
+      "cards_found": 3,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "3 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-28T16:13:50.479958",
+      "query": "seeking founding engineer AI startup",
+      "freshness": "past-week",
+      "target_objective": "Genuine decision-makers in software/AI startups seeking MVP engineering support",
+      "cards_found": 3,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "3 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-28T16:14:18.245392",
+      "query": "launching MVP AI startup",
+      "freshness": "past-week",
+      "target_objective": "Genuine decision-makers in software/AI startups seeking MVP engineering support",
+      "cards_found": 6,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "6 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-28T16:14:39.047701",
+      "query": "hiring engineers for AI MVP",
+      "freshness": "past-week",
+      "target_objective": "Genuine decision-makers in software/AI startups seeking MVP engineering support",
+      "cards_found": 6,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "6 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-28T16:15:59.126436",
+      "query": "founding team for AI MVP",
+      "freshness": "past-week",
+      "target_objective": "Genuine decision-makers in software/AI startups seeking MVP engineering support",
+      "cards_found": 3,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "3 cards inspected, 0 passed full USA founder qualification"
+    }
+  ],
   "user_feedback_history": [],
-  "last_updated": "2026-10-28T15:41:11.795408"
+  "qualified_leads": [],
+  "last_updated": "2026-10-28T16:15:59.126456"
 }

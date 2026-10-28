@@ -49,6 +49,14 @@ class LinkedInAgentTools:
         self.cards_on_current_query = 0
         self.qualified_on_current_query = 0
 
+    @property
+    def current_expected_output(self):
+        return self.current_target_objective
+
+    @current_expected_output.setter
+    def current_expected_output(self, val):
+        self.current_target_objective = val
+
     def execute_search(
         self,
         query: str,

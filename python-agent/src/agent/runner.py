@@ -330,7 +330,7 @@ SESSION PERSISTENT CONTEXT & ISOLATED CSV:
             query=tools_engine.current_query,
             freshness=tools_engine.current_freshness,
             rationale=tools_engine.current_rationale,
-            expected_output=tools_engine.current_expected_output,
+            expected_output=getattr(tools_engine, "current_target_objective", ""),
             cards_count=tools_engine.cards_on_current_query,
             qualified_count=tools_engine.qualified_on_current_query
         )
