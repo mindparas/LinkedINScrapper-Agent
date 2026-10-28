@@ -130,6 +130,47 @@ SESSION PERSISTENT CONTEXT & ISOLATED CSV:
 
     while not is_finished and len(exporter.leads) < target_total_leads and turn < max_turns:
         turn += 1
+
+        # Self-healing message sanitization: Ensure every tool_call in assistant messages
+        # is immediately followed by its matching tool role messages before any user/assistant message.
+        sanitized_messages = []
+        msg_idx = 0
+        while msg_idx < len(messages):
+            m = messages[msg_idx]
+            sanitized_messages.append(m)
+            if m.get("role") == "assistant" and m.get("tool_calls"):
+                expected_ids = {tc["id"] for tc in m["tool_calls"]}
+                # Collect trailing tool messages and any interleaved non-tool messages
+                next_idx = msg_idx + 1
+                matched_tool_msgs = []
+                interleaved_msgs = []
+                found_ids = set()
+                while next_idx < len(messages) and messages[next_idx].get("role") in ["tool", "user", "system"]:
+                    if messages[next_idx].get("role") == "tool":
+                        tid = messages[next_idx].get("tool_call_id")
+                        if tid in expected_ids:
+                            found_ids.add(tid)
+                            matched_tool_msgs.append(messages[next_idx])
+                        else:
+                            interleaved_msgs.append(messages[next_idx])
+                    else:
+                        interleaved_msgs.append(messages[next_idx])
+                    next_idx += 1
+
+                sanitized_messages.extend(matched_tool_msgs)
+                # Fill any missing tool_call responses with a safe fallback
+                for missing_id in (expected_ids - found_ids):
+                    sanitized_messages.append({
+                        "role": "tool",
+                        "tool_call_id": missing_id,
+                        "content": json.dumps({"status": "acknowledged", "observation": "Turn completed."}, ensure_ascii=False)
+                    })
+                sanitized_messages.extend(interleaved_msgs)
+                msg_idx = next_idx
+                continue
+            msg_idx += 1
+        messages = sanitized_messages
+
         headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {OPENAI_API_KEY}"
@@ -152,6 +193,15 @@ SESSION PERSISTENT CONTEXT & ISOLATED CSV:
             with urllib.request.urlopen(req, timeout=25) as resp:
                 resp_data = json.loads(resp.read().decode("utf-8"))
                 choice = resp_data["choices"][0]["message"]
+        except urllib.error.HTTPError as e:
+            err_body = ""
+            try:
+                err_body = e.read().decode("utf-8")
+            except Exception:
+                pass
+            logger.error(f"OpenAI agent call HTTP error on turn {turn}: {e.code} {e.reason} - {err_body}")
+            time.sleep(3)
+            continue
         except Exception as e:
             logger.error(f"OpenAI agent call error on turn {turn}: {e}")
             time.sleep(3)
@@ -175,7 +225,8 @@ SESSION PERSISTENT CONTEXT & ISOLATED CSV:
             "tool_calls": tool_calls
         })
 
-        for tc in tool_calls:
+        pending_user_directives = []
+        for tc_idx, tc in enumerate(tool_calls):
             fn = tc["function"]
             fn_name = fn["name"]
             call_id = tc["id"]
@@ -282,7 +333,7 @@ SESSION PERSISTENT CONTEXT & ISOLATED CSV:
                             tools_engine.active_developer_directives.append(user_feedback)
                             print(f"   {Style.GREEN}✓ Developer guidance recorded & prioritized for next lead generation!{Style.RESET}\n")
                             
-                            messages.append({
+                            pending_user_directives.append({
                                 "role": "user",
                                 "content": (
                                     f"Lead #{len(exporter.leads)} ({args.get('author')}) was qualified and saved to the session CSV.\n"
@@ -293,7 +344,7 @@ SESSION PERSISTENT CONTEXT & ISOLATED CSV:
                                 )
                             })
                         else:
-                            messages.append({
+                            pending_user_directives.append({
                                 "role": "user",
                                 "content": (
                                     f"Lead #{len(exporter.leads)} ({args.get('author')}) was qualified and saved to the session CSV.\n"
@@ -354,7 +405,18 @@ SESSION PERSISTENT CONTEXT & ISOLATED CSV:
 
             if is_finished or len(exporter.leads) >= target_total_leads:
                 is_finished = True
+                # Ensure all remaining tool_calls in this turn get responses so message history remains valid
+                for rem_tc in tool_calls[tc_idx + 1:]:
+                    messages.append({
+                        "role": "tool",
+                        "tool_call_id": rem_tc["id"],
+                        "content": json.dumps({"status": "skipped", "observation": "Goal reached or campaign wrapped up."}, ensure_ascii=False)
+                    })
                 break
+
+        # Append developer directives AFTER all tool messages have been appended
+        for pud in pending_user_directives:
+            messages.append(pud)
 
     # Save final memory record
     if tools_engine.current_query:

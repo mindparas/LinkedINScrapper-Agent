@@ -1,109 +1,109 @@
 {
-  "generated_at": "2026-10-28T16:28:50.258560",
+  "generated_at": "2026-10-28T17:41:27.065564",
   "target_limit": 1,
-  "qualified_leads_count": 0,
-  "skipped_cards_count": 18,
+  "qualified_leads_count": 2,
+  "skipped_cards_count": 1,
   "total_turns": 40,
   "recent_executions": [
     {
-      "timestamp": "2026-10-28T16:24:02.280854",
-      "query": "building AI MVP seeking technical talent",
+      "timestamp": "2026-10-28T17:21:05.616183",
+      "query": "AI startup looking for founding engineers",
       "freshness": "past-week",
-      "target_objective": "Genuine USA decision-makers in software/AI startups looking for MVP engineering support",
+      "target_objective": "Genuine decision-makers in AI startups looking for founding engineers for their MVP",
       "cards_found": 0,
       "qualified_count": 0,
       "developer_guidance": "",
       "outcome": "0 cards returned on LinkedIn (Zero results)"
     },
     {
-      "timestamp": "2026-10-28T16:24:19.364655",
-      "query": "looking for engineers AI startup",
+      "timestamp": "2026-10-28T17:21:08.784607",
+      "query": "AI startup building MVP seeking technical cofounders",
       "freshness": "past-week",
-      "target_objective": "Genuine USA decision-makers in software/AI startups looking for MVP engineering support",
+      "target_objective": "Genuine decision-makers in AI startups looking for technical cofounders to build their MVP",
       "cards_found": 0,
       "qualified_count": 0,
       "developer_guidance": "",
       "outcome": "0 cards returned on LinkedIn (Zero results)"
     },
     {
-      "timestamp": "2026-10-28T16:24:51.060603",
-      "query": "AI startup looking for engineers in the US",
+      "timestamp": "2026-10-28T17:21:12.418068",
+      "query": "AI startup looking for engineers to build MVP",
       "freshness": "past-week",
-      "target_objective": "Genuine USA decision-makers in software/AI startups looking for MVP engineering support",
-      "cards_found": 3,
-      "qualified_count": 0,
-      "developer_guidance": "",
-      "outcome": "3 cards inspected, 0 passed full USA founder qualification"
-    },
-    {
-      "timestamp": "2026-10-28T16:25:22.157142",
-      "query": "AI startup seeking engineers in the US",
-      "freshness": "past-week",
-      "target_objective": "Genuine USA decision-makers in software/AI startups looking for MVP engineering support",
+      "target_objective": "Genuine decision-makers in AI startups looking for engineers to develop their MVPs",
       "cards_found": 0,
       "qualified_count": 0,
       "developer_guidance": "",
       "outcome": "0 cards returned on LinkedIn (Zero results)"
     },
     {
-      "timestamp": "2026-10-28T16:25:50.695235",
-      "query": "AI startup AND engineers AND (USA OR US)",
+      "timestamp": "2026-10-28T17:21:15.516223",
+      "query": "AI startup seeking technical cofounders for MVP",
       "freshness": "past-week",
-      "target_objective": "Genuine USA decision-makers in software/AI startups looking for MVP engineering support",
-      "cards_found": 3,
-      "qualified_count": 0,
-      "developer_guidance": "",
-      "outcome": "3 cards inspected, 0 passed full USA founder qualification"
-    },
-    {
-      "timestamp": "2026-10-28T16:26:23.380515",
-      "query": "AI startup hiring engineers",
-      "freshness": "past-week",
-      "target_objective": "Genuine USA decision-makers in software/AI startups looking for MVP engineering support",
-      "cards_found": 3,
-      "qualified_count": 0,
-      "developer_guidance": "",
-      "outcome": "3 cards inspected, 0 passed full USA founder qualification"
-    },
-    {
-      "timestamp": "2026-10-28T16:26:53.725066",
-      "query": "AI startup looking for engineers in the US",
-      "freshness": "past-week",
-      "target_objective": "Genuine USA decision-makers in software/AI startups looking for MVP engineering support",
-      "cards_found": 3,
-      "qualified_count": 0,
-      "developer_guidance": "",
-      "outcome": "3 cards inspected, 0 passed full USA founder qualification"
-    },
-    {
-      "timestamp": "2026-10-28T16:27:42.987924",
-      "query": "AI startup looking for engineers",
-      "freshness": "past-week",
-      "target_objective": "Genuine USA decision-makers in software/AI startups looking for MVP engineering support",
+      "target_objective": "Genuine decision-makers in AI startups looking for technical cofounders to develop their MVP",
       "cards_found": 0,
       "qualified_count": 0,
       "developer_guidance": "",
       "outcome": "0 cards returned on LinkedIn (Zero results)"
     },
     {
-      "timestamp": "2026-10-28T16:28:27.436428",
-      "query": "AI startup looking for engineers in the US",
+      "timestamp": "2026-10-28T17:21:18.777993",
+      "query": "AI startup looking for engineers to develop MVP",
       "freshness": "past-week",
-      "target_objective": "Genuine USA decision-makers in software/AI startups looking for MVP engineering support",
+      "target_objective": "Genuine decision-makers in AI startups looking for engineers to develop their MVPs",
+      "cards_found": 0,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "0 cards returned on LinkedIn (Zero results)"
+    },
+    {
+      "timestamp": "2026-10-28T17:32:33.616472",
+      "query": "\"San Francisco\" \"founding engineer\"",
+      "freshness": "past-week",
+      "target_objective": "Discover genuine verified USA decision-maker leads for custom software & AI MVP engineering.",
+      "cards_found": 3,
+      "qualified_count": 1,
+      "developer_guidance": "",
+      "outcome": "1 genuine lead(s) qualified"
+    },
+    {
+      "timestamp": "2026-10-28T17:33:19.372509",
+      "query": "\"San Francisco\" \"founding engineer\"",
+      "freshness": "past-week",
+      "target_objective": "Discover genuine verified USA decision-maker leads for custom software & AI MVP engineering.",
+      "cards_found": 6,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "6 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-28T17:36:11.373870",
+      "query": "\"San Francisco\" \"founding engineer\"",
+      "freshness": "past-week",
+      "target_objective": "Discover genuine verified USA decision-maker leads for custom software & AI MVP engineering.",
       "cards_found": 3,
       "qualified_count": 0,
       "developer_guidance": "",
       "outcome": "3 cards inspected, 0 passed full USA founder qualification"
     },
     {
-      "timestamp": "2026-10-28T16:28:50.258253",
-      "query": "AI startup hiring engineers in the US",
+      "timestamp": "2026-10-28T17:37:05.938730",
+      "query": "\"San Francisco\" \"founding engineer\"",
       "freshness": "past-week",
-      "target_objective": "Genuine USA decision-makers in software/AI startups looking for MVP engineering support",
-      "cards_found": 3,
+      "target_objective": "Discover genuine verified USA decision-maker leads for custom software & AI MVP engineering.",
+      "cards_found": 0,
       "qualified_count": 0,
       "developer_guidance": "",
-      "outcome": "3 cards inspected, 0 passed full USA founder qualification"
+      "outcome": "0 cards returned on LinkedIn (Zero results)"
+    },
+    {
+      "timestamp": "2026-10-28T17:41:27.063640",
+      "query": "Austin founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Discover genuine verified USA decision-maker leads for custom software & AI MVP engineering.",
+      "cards_found": 3,
+      "qualified_count": 1,
+      "developer_guidance": "",
+      "outcome": "1 genuine lead(s) qualified"
     }
   ]
 }

@@ -400,6 +400,56 @@
       "qualified_count": 0,
       "developer_guidance": "",
       "outcome": "0 cards returned on LinkedIn (Zero results)"
+    },
+    {
+      "timestamp": "2026-10-28T17:32:33.616472",
+      "query": "\"San Francisco\" \"founding engineer\"",
+      "freshness": "past-week",
+      "target_objective": "Discover genuine verified USA decision-maker leads for custom software & AI MVP engineering.",
+      "cards_found": 3,
+      "qualified_count": 1,
+      "developer_guidance": "",
+      "outcome": "1 genuine lead(s) qualified"
+    },
+    {
+      "timestamp": "2026-10-28T17:33:19.372509",
+      "query": "\"San Francisco\" \"founding engineer\"",
+      "freshness": "past-week",
+      "target_objective": "Discover genuine verified USA decision-maker leads for custom software & AI MVP engineering.",
+      "cards_found": 6,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "6 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-28T17:36:11.373870",
+      "query": "\"San Francisco\" \"founding engineer\"",
+      "freshness": "past-week",
+      "target_objective": "Discover genuine verified USA decision-maker leads for custom software & AI MVP engineering.",
+      "cards_found": 3,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "3 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-28T17:37:05.938730",
+      "query": "\"San Francisco\" \"founding engineer\"",
+      "freshness": "past-week",
+      "target_objective": "Discover genuine verified USA decision-maker leads for custom software & AI MVP engineering.",
+      "cards_found": 0,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "0 cards returned on LinkedIn (Zero results)"
+    },
+    {
+      "timestamp": "2026-10-28T17:41:27.063640",
+      "query": "Austin founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Discover genuine verified USA decision-maker leads for custom software & AI MVP engineering.",
+      "cards_found": 3,
+      "qualified_count": 1,
+      "developer_guidance": "",
+      "outcome": "1 genuine lead(s) qualified"
     }
   ],
   "user_feedback_history": [
@@ -512,8 +562,37 @@
       "timestamp": "2026-10-28T17:21:18.778946",
       "context": "Search Formulation",
       "feedback": "\"author_url\": \"https://www.linkedin.com/in/nazia-khan-1-khan/\","
+    },
+    {
+      "timestamp": "2026-10-28T17:37:02.371156",
+      "context": "Search Formulation",
+      "feedback": "change the query"
+    },
+    {
+      "timestamp": "2026-10-28T17:39:00.970626",
+      "context": "John Kim",
+      "feedback": "Focus on our AI/ML profile we need lead for sales profile which needs Us we need that geniun leads"
     }
   ],
-  "qualified_leads": [],
-  "last_updated": "2026-10-28T17:21:18.778951"
+  "qualified_leads": [
+    {
+      "timestamp": "2026-10-28T17:29:11.500494",
+      "author": "Paul Wilkens",
+      "profile_url": "https://www.linkedin.com/in/paulamwilkens/",
+      "post_url": "https://www.linkedin.com/feed/update/urn:li:activity:unknown",
+      "company": "",
+      "location": "Houston, Texas, United States",
+      "fit_score": 80
+    },
+    {
+      "timestamp": "2026-10-28T17:37:33.746160",
+      "author": "John Kim",
+      "profile_url": "https://www.linkedin.com/in/johnkim5480931a8/",
+      "post_url": "https://lnkd.in/p/dNVxPWUw",
+      "company": "Paraform",
+      "location": "San Francisco Bay Area",
+      "fit_score": 85
+    }
+  ],
+  "last_updated": "2026-10-28T17:41:27.063680"
 }

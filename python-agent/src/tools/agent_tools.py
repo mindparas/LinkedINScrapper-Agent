@@ -49,6 +49,9 @@ class LinkedInAgentTools:
         self.cards_on_current_query = 0
         self.qualified_on_current_query = 0
         self.consecutive_non_usa_count = 0
+        self.consecutive_empty_scrolls = 0
+        self.consecutive_zero_card_scans = 0
+        self.last_dom_card_count = 0
 
     @property
     def current_expected_output(self):
@@ -87,6 +90,9 @@ class LinkedInAgentTools:
         self.cards_on_current_query = 0
         self.qualified_on_current_query = 0
         self.consecutive_non_usa_count = 0
+        self.consecutive_empty_scrolls = 0
+        self.consecutive_zero_card_scans = 0
+        self.last_dom_card_count = 0
         clean_q = clean_linkedin_boolean_query(query)
         self.current_query = clean_q
         self.current_freshness = freshness if freshness in ["past-24h", "past-week"] else "past-24h"
@@ -146,6 +152,7 @@ class LinkedInAgentTools:
         comment_btns = self.driver.find_elements(By.CSS_SELECTOR, "button[aria-label*='Comment' i], button[aria-label*='comment']")
         visible_cards = len(comment_btns)
         self.cards_on_current_query = visible_cards
+        self.last_dom_card_count = visible_cards
 
         if has_no_results or visible_cards == 0:
             obs = f"0 results found on LinkedIn for '{clean_q}' (Freshness: {self.current_freshness}). Page displays 'No results found'. DO NOT SCROLL on this page! Analyze why this happened and immediately execute a different query or test past-week."
@@ -268,6 +275,25 @@ class LinkedInAgentTools:
                 is_auth, auth_hint = verify_bde_lead_authenticity(c["author"], c["headline"], "", c["company"])
                 c["bde_authenticity_check"] = "PASS: Direct Founder/Exec" if is_auth else f"FLAGGED: {auth_hint}"
                 unevaluated_cards.append(c)
+
+        if len(unevaluated_cards) == 0:
+            self.consecutive_zero_card_scans += 1
+            if self.consecutive_zero_card_scans >= 2 or self.consecutive_empty_scrolls >= 1:
+                obs = (
+                    f"Extracted 0 new post cards from the DOM (all visible cards have already been evaluated or qualified). "
+                    f"🛑 FEED EXHAUSTED for query '{self.current_query}'. STOP scrolling on this feed. "
+                    f"You MUST formulate and execute a new search query targeting a different US Tech Hub (e.g. 'Austin', 'San Francisco', 'NYC', 'Seattle') "
+                    f"or a US Accelerator (e.g. 'YC founding engineer')."
+                )
+            else:
+                obs = "Extracted 0 new post cards from the DOM (all visible cards were already evaluated). You may scroll once (steps=1) to attempt loading more cards, or execute a new search query."
+            return {
+                "cards_found_count": 0,
+                "cards": [],
+                "observation": obs
+            }
+        else:
+            self.consecutive_zero_card_scans = 0
 
         return {
             "cards_found_count": len(unevaluated_cards),
@@ -543,10 +569,17 @@ class LinkedInAgentTools:
 
         comment_btns = self.driver.find_elements(By.CSS_SELECTOR, "button[aria-label*='Comment' i], button[aria-label*='comment']")
         total_cards = len(comment_btns)
+        new_cards_loaded = total_cards - self.last_dom_card_count
         self.cards_on_current_query = total_cards
+        self.last_dom_card_count = total_cards
+
+        if new_cards_loaded <= 0:
+            self.consecutive_empty_scrolls += 1
+        else:
+            self.consecutive_empty_scrolls = 0
 
         body_text = self.driver.find_element(By.TAG_NAME, "body").text
-        at_end = "No more results" in body_text or "You've viewed all" in body_text
+        at_end = "No more results" in body_text or "You've viewed all" in body_text or self.consecutive_empty_scrolls >= 2
 
         if self.consecutive_non_usa_count >= 2:
             return {
@@ -556,11 +589,24 @@ class LinkedInAgentTools:
                 "observation": f"🚨 FEED BAILOUT TRIGGERED: Feed has {self.consecutive_non_usa_count} consecutive international non-US cards! Scrolling further on this query is unproductive. Immediately execute a new search query anchored with a US Tech Hub (e.g. 'San Francisco', 'Austin', 'NYC') or US Accelerator ('YC')."
             }
 
+        if at_end or self.consecutive_empty_scrolls >= 2:
+            return {
+                "total_cards_in_dom": total_cards,
+                "scroll_count": self.scroll_count_on_query,
+                "at_end_of_feed": True,
+                "observation": (
+                    f"🛑 FEED EXHAUSTED: Scrolling did not load any new cards (DOM stopped at {total_cards} cards). "
+                    f"The LinkedIn feed for '{self.current_query}' is exhausted. Do NOT call scroll_feed again! "
+                    f"You MUST immediately execute a new search query targeting a different US Metro (e.g. 'Austin', 'San Francisco', 'NYC', 'Seattle') "
+                    f"or a US Accelerator (e.g. 'YC founding engineer')."
+                )
+            }
+
         return {
             "total_cards_in_dom": total_cards,
             "scroll_count": self.scroll_count_on_query,
             "at_end_of_feed": at_end,
-            "observation": f"Scrolled {steps} step(s). Total cards in DOM: {total_cards}. Call scan_and_read_cards to inspect the newly loaded cards."
+            "observation": f"Scrolled {steps} step(s). Total cards in DOM: {total_cards} (+{new_cards_loaded} new). Call scan_and_read_cards to inspect the newly loaded cards."
         }
 
     def qualify_and_save_lead(self, card_index: int, author: str, profile_url: str, headline: str, role: str, company: str, location: str, fit_score: int, custom_pitch: str, reasoning: str):
