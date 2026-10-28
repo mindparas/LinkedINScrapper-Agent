@@ -722,3 +722,4 @@ class LinkedInAgentTools:
             "results": results,
             "observation": f"Web search for '{query}' returned {len(results)} snippets."
         }
+

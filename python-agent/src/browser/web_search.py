@@ -22,3 +22,4 @@ def search_web_api(query):
         return results if results else ["No instant summary found; rely on LinkedIn profile details."]
     except Exception as e:
         return [f"Web search note: {e}"]
+

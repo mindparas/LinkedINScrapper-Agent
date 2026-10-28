@@ -43,3 +43,4 @@ def verify_or_prompt_login(driver, logger):
     time.sleep(3)
     logger.info("One-time login confirmed and saved.")
     return True
+

@@ -34,3 +34,4 @@ def clean_linkedin_boolean_query(query_str):
         q = re.sub(r'\(\s*(?:AND|OR)\s+', '(', q, flags=re.I)
     q = re.sub(r'\s+', ' ', q).strip()
     return q
+

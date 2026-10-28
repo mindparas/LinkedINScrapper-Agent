@@ -47,3 +47,4 @@ def verify_bde_lead_authenticity(author: str, headline: str, role: str = "", com
         return False, f"Actual headline '{headline}' does not indicate a direct Founder, Co-Founder, CEO, CTO, or VP of Engineering"
         
     return True, "Authentic startup decision maker"
+

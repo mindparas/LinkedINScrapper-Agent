@@ -86,3 +86,4 @@ class LiveLeadExporter:
         with open(self.current_json_path, "w", encoding="utf-8") as f:
             json.dump(self.leads, f, indent=2, ensure_ascii=False)
         return True
+

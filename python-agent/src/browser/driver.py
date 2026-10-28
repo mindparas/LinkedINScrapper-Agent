@@ -39,3 +39,4 @@ def setup_stealth_driver(profile_dir):
         pass
 
     return driver
+

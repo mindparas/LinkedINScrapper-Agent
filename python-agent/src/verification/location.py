@@ -84,3 +84,4 @@ def is_verified_usa_location(raw_location: str) -> tuple:
         return True, "Matches US state 2-letter postal code"
         
     return False, "No verified US indicator matched"
+
