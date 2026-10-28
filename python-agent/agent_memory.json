@@ -210,6 +210,196 @@
       "qualified_count": 0,
       "developer_guidance": "",
       "outcome": "3 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-28T16:59:54.143209",
+      "query": "building AI MVP seeking technical cofounder",
+      "freshness": "past-week",
+      "target_objective": "Founders or CTOs of AI startups looking for technical partners to build MVPs",
+      "cards_found": 1,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "1 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-28T17:01:21.780454",
+      "query": "launching AI MVP looking for founding engineers",
+      "freshness": "past-week",
+      "target_objective": "Founders or CTOs of AI startups actively seeking founding engineers for their MVPs",
+      "cards_found": 0,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "0 cards returned on LinkedIn (Zero results)"
+    },
+    {
+      "timestamp": "2026-10-28T17:05:53.038063",
+      "query": "AI startup building MVP seeking founding engineers",
+      "freshness": "past-week",
+      "target_objective": "Founders or CTOs of AI startups looking for founding engineers to develop their MVPs",
+      "cards_found": 0,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "0 cards returned on LinkedIn (Zero results)"
+    },
+    {
+      "timestamp": "2026-10-28T17:06:33.573190",
+      "query": "AI startup seeking engineers for MVP development",
+      "freshness": "past-week",
+      "target_objective": "Founders or CTOs of AI startups looking for engineers to develop their MVPs",
+      "cards_found": 0,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "0 cards returned on LinkedIn (Zero results)"
+    },
+    {
+      "timestamp": "2026-10-28T17:20:29.831262",
+      "query": "building AI MVP seeking founding engineers",
+      "freshness": "past-week",
+      "target_objective": "Genuine decision-makers in AI startups looking for technical partners or engineers for MVP development",
+      "cards_found": 0,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "0 cards returned on LinkedIn (Zero results)"
+    },
+    {
+      "timestamp": "2026-10-28T17:20:33.402213",
+      "query": "launching AI MVP looking for technical cofounder",
+      "freshness": "past-week",
+      "target_objective": "Genuine decision-makers in AI startups seeking technical cofounders for MVP development",
+      "cards_found": 0,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "0 cards returned on LinkedIn (Zero results)"
+    },
+    {
+      "timestamp": "2026-10-28T17:20:37.080773",
+      "query": "AI startup seeking engineers for MVP development",
+      "freshness": "past-week",
+      "target_objective": "Genuine decision-makers in AI startups looking for engineers to develop their MVPs",
+      "cards_found": 0,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "0 cards returned on LinkedIn (Zero results)"
+    },
+    {
+      "timestamp": "2026-10-28T17:20:40.616474",
+      "query": "building AI MVP hiring founding engineers",
+      "freshness": "past-week",
+      "target_objective": "Genuine decision-makers in AI startups looking to hire founding engineers for MVP development",
+      "cards_found": 0,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "0 cards returned on LinkedIn (Zero results)"
+    },
+    {
+      "timestamp": "2026-10-28T17:20:43.832091",
+      "query": "AI startup launching MVP seeking technical talent",
+      "freshness": "past-week",
+      "target_objective": "Genuine decision-makers in AI startups looking for technical talent to launch their MVPs",
+      "cards_found": 0,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "0 cards returned on LinkedIn (Zero results)"
+    },
+    {
+      "timestamp": "2026-10-28T17:20:47.546886",
+      "query": "AI startup building MVP looking for engineers",
+      "freshness": "past-week",
+      "target_objective": "Genuine decision-makers in AI startups looking for engineers to build their MVPs",
+      "cards_found": 0,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "0 cards returned on LinkedIn (Zero results)"
+    },
+    {
+      "timestamp": "2026-10-28T17:20:51.474541",
+      "query": "building AI MVP team",
+      "freshness": "past-week",
+      "target_objective": "Genuine decision-makers in AI startups looking to build a team for their MVP",
+      "cards_found": 0,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "0 cards returned on LinkedIn (Zero results)"
+    },
+    {
+      "timestamp": "2026-10-28T17:20:54.694639",
+      "query": "AI startup building MVP seeking engineers",
+      "freshness": "past-week",
+      "target_objective": "Genuine decision-makers in AI startups looking for engineers to build their MVPs",
+      "cards_found": 0,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "0 cards returned on LinkedIn (Zero results)"
+    },
+    {
+      "timestamp": "2026-10-28T17:20:58.688197",
+      "query": "AI startup seeking engineers for MVP",
+      "freshness": "past-week",
+      "target_objective": "Genuine decision-makers in AI startups looking for engineers to develop their MVPs",
+      "cards_found": 0,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "0 cards returned on LinkedIn (Zero results)"
+    },
+    {
+      "timestamp": "2026-10-28T17:21:02.502836",
+      "query": "AI startup hiring engineers for MVP development",
+      "freshness": "past-week",
+      "target_objective": "Genuine decision-makers in AI startups looking to hire engineers for MVP development",
+      "cards_found": 0,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "0 cards returned on LinkedIn (Zero results)"
+    },
+    {
+      "timestamp": "2026-10-28T17:21:05.616183",
+      "query": "AI startup looking for founding engineers",
+      "freshness": "past-week",
+      "target_objective": "Genuine decision-makers in AI startups looking for founding engineers for their MVP",
+      "cards_found": 0,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "0 cards returned on LinkedIn (Zero results)"
+    },
+    {
+      "timestamp": "2026-10-28T17:21:08.784607",
+      "query": "AI startup building MVP seeking technical cofounders",
+      "freshness": "past-week",
+      "target_objective": "Genuine decision-makers in AI startups looking for technical cofounders to build their MVP",
+      "cards_found": 0,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "0 cards returned on LinkedIn (Zero results)"
+    },
+    {
+      "timestamp": "2026-10-28T17:21:12.418068",
+      "query": "AI startup looking for engineers to build MVP",
+      "freshness": "past-week",
+      "target_objective": "Genuine decision-makers in AI startups looking for engineers to develop their MVPs",
+      "cards_found": 0,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "0 cards returned on LinkedIn (Zero results)"
+    },
+    {
+      "timestamp": "2026-10-28T17:21:15.516223",
+      "query": "AI startup seeking technical cofounders for MVP",
+      "freshness": "past-week",
+      "target_objective": "Genuine decision-makers in AI startups looking for technical cofounders to develop their MVP",
+      "cards_found": 0,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "0 cards returned on LinkedIn (Zero results)"
+    },
+    {
+      "timestamp": "2026-10-28T17:21:18.777993",
+      "query": "AI startup looking for engineers to develop MVP",
+      "freshness": "past-week",
+      "target_objective": "Genuine decision-makers in AI startups looking for engineers to develop their MVPs",
+      "cards_found": 0,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "0 cards returned on LinkedIn (Zero results)"
     }
   ],
   "user_feedback_history": [
@@ -232,8 +422,98 @@
       "timestamp": "2026-10-28T16:27:35.643143",
       "context": "Search Formulation",
       "feedback": "search web for more revelt result use web tool and search there how can you improve linked search"
+    },
+    {
+      "timestamp": "2026-10-28T17:01:18.581916",
+      "context": "Search Formulation",
+      "feedback": "Construct a query which gets the query w"
+    },
+    {
+      "timestamp": "2026-10-28T17:05:49.562003",
+      "context": "Search Formulation",
+      "feedback": "Construct a query for linked in which lets you use see a custom frame for US data only in a spcific time line kind of suppose right now there is a night in usa so can't we get a query which gets only USA specifc posts. some query like that"
+    },
+    {
+      "timestamp": "2026-10-28T17:20:26.206546",
+      "context": "Search Formulation",
+      "feedback": "I have done a research which will you construct a good query. {"
+    },
+    {
+      "timestamp": "2026-10-28T17:20:29.833068",
+      "context": "Search Formulation",
+      "feedback": "\"run_timestamp\": \"2026-10-28T17:14:39.890058\","
+    },
+    {
+      "timestamp": "2026-10-28T17:20:33.403763",
+      "context": "Search Formulation",
+      "feedback": "\"scenarios_tested\": ["
+    },
+    {
+      "timestamp": "2026-10-28T17:20:37.082370",
+      "context": "Search Formulation",
+      "feedback": "{"
+    },
+    {
+      "timestamp": "2026-10-28T17:20:40.618086",
+      "context": "Search Formulation",
+      "feedback": "\"category\": \"Baseline (Global Generic)\","
+    },
+    {
+      "timestamp": "2026-10-28T17:20:43.833864",
+      "context": "Search Formulation",
+      "feedback": "\"query\": \"building AI MVP team\","
+    },
+    {
+      "timestamp": "2026-10-28T17:20:47.549788",
+      "context": "Search Formulation",
+      "feedback": "\"type\": \"content\","
+    },
+    {
+      "timestamp": "2026-10-28T17:20:51.476421",
+      "context": "Search Formulation",
+      "feedback": "\"total_cards\": 2,"
+    },
+    {
+      "timestamp": "2026-10-28T17:20:54.696614",
+      "context": "Search Formulation",
+      "feedback": "\"cards_inspected\": 2,"
+    },
+    {
+      "timestamp": "2026-10-28T17:20:58.690301",
+      "context": "Search Formulation",
+      "feedback": "\"usa_verified_count\": 0,"
+    },
+    {
+      "timestamp": "2026-10-28T17:21:02.504864",
+      "context": "Search Formulation",
+      "feedback": "\"founder_count\": 0,"
+    },
+    {
+      "timestamp": "2026-10-28T17:21:05.618038",
+      "context": "Search Formulation",
+      "feedback": "\"samples\": ["
+    },
+    {
+      "timestamp": "2026-10-28T17:21:08.796881",
+      "context": "Search Formulation",
+      "feedback": "{"
+    },
+    {
+      "timestamp": "2026-10-28T17:21:12.419968",
+      "context": "Search Formulation",
+      "feedback": "\"author\": \"Nazia Khan\","
+    },
+    {
+      "timestamp": "2026-10-28T17:21:15.518223",
+      "context": "Search Formulation",
+      "feedback": "\"headline\": \"Full Stack Developer | React.js, Next.js & Node.js | SaaS, Business Web Apps & Dashboards | API Integration | MVP Development\","
+    },
+    {
+      "timestamp": "2026-10-28T17:21:18.778946",
+      "context": "Search Formulation",
+      "feedback": "\"author_url\": \"https://www.linkedin.com/in/nazia-khan-1-khan/\","
     }
   ],
   "qualified_leads": [],
-  "last_updated": "2026-10-28T16:28:50.258258"
+  "last_updated": "2026-10-28T17:21:18.778951"
 }
