@@ -109,6 +109,7 @@ AGENT_TOOLS = [
                     "location": {"type": "string", "description": "Verified US location (e.g. San Francisco, CA / Austin, TX)"},
                     "fit_score": {"type": "integer", "description": "BDE Fit score 0-100"},
                     "custom_pitch": {"type": "string", "description": "1-2 sentence customized cold outreach hook mentioning their specific project"},
+                    "buying_intent_signal": {"type": "string", "description": "The specific commercial or technical buying intent extracted from the post (e.g. building an MVP, looking for dev shop, hiring founding engineer)"},
                     "reasoning": {"type": "string", "description": "Why this lead is qualified"}
                 },
                 "required": ["card_index", "author", "profile_url", "headline", "role", "company", "location", "fit_score", "custom_pitch", "reasoning"]

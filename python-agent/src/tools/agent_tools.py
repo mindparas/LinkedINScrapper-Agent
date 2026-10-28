@@ -13,6 +13,7 @@ from src.verification import (
     parse_post_age,
     is_verified_usa_location,
     verify_bde_lead_authenticity,
+    verify_sales_buying_intent,
 )
 from src.browser import search_web_api
 
@@ -52,6 +53,7 @@ class LinkedInAgentTools:
         self.consecutive_empty_scrolls = 0
         self.consecutive_zero_card_scans = 0
         self.last_dom_card_count = 0
+        self.last_scanned_cards = []
 
     @property
     def current_expected_output(self):
@@ -112,13 +114,15 @@ class LinkedInAgentTools:
             print(f"💬 {Style.BOLD}Developer Feedback Integrated:{Style.RESET}\n   {Style.GREEN}{developer_feedback_alignment}{Style.RESET}")
         print("=" * 80)
 
-        # Developer Live Steering Point BEFORE navigating on LinkedIn
-        print(f"\n{Style.CYAN}{Style.BOLD}💬 [DEVELOPER INTERACTION & STEERING]:{Style.RESET}")
-        print(f"   {Style.DIM}(Press ENTER to run this search, or type your instructions to steer/improve it){Style.RESET}")
-        try:
-            dev_hint = input(f"   {Style.BOLD}Developer Guidance > {Style.RESET}").strip()
-        except (EOFError, KeyboardInterrupt):
-            dev_hint = ""
+        dev_hint = ""
+        if not os.environ.get("NON_INTERACTIVE"):
+            # Developer Live Steering Point BEFORE navigating on LinkedIn
+            print(f"\n{Style.CYAN}{Style.BOLD}💬 [DEVELOPER INTERACTION & STEERING]:{Style.RESET}")
+            print(f"   {Style.DIM}(Press ENTER to run this search, or type your instructions to steer/improve it){Style.RESET}")
+            try:
+                dev_hint = input(f"   {Style.BOLD}Developer Guidance > {Style.RESET}").strip()
+            except (EOFError, KeyboardInterrupt):
+                dev_hint = ""
 
         if dev_hint:
             self.logger.info(f"Developer steered agent during search formulation: '{dev_hint}'")
@@ -239,11 +243,30 @@ class LinkedInAgentTools:
             const compEl = c.querySelector('a[href*="/company/"]');
             const company = compEl ? (compEl.innerText || "").split("\\n")[0].trim() : "";
 
+            // Direct extraction of exact post URL from card DOM
+            let directPostUrl = "";
+            const postAnchor = c.querySelector('a[href*="/feed/update/urn:li:"], a[href*="/posts/"]');
+            if (postAnchor && postAnchor.href) {
+                directPostUrl = postAnchor.href.split("?")[0];
+            } else {
+                const dataUrn = c.getAttribute('data-urn') || c.getAttribute('data-activity-urn') || c.getAttribute('data-id');
+                if (dataUrn && dataUrn.includes('urn:li:activity:')) {
+                    directPostUrl = `https://www.linkedin.com/feed/update/${dataUrn}/`;
+                } else {
+                    const childWithUrn = c.querySelector('[data-urn*="urn:li:activity:"], [data-id*="urn:li:activity:"]');
+                    if (childWithUrn) {
+                        const cUrn = childWithUrn.getAttribute('data-urn') || childWithUrn.getAttribute('data-id');
+                        if (cUrn) directPostUrl = `https://www.linkedin.com/feed/update/${cUrn}/`;
+                    }
+                }
+            }
+
             return {
                 card_index: idx,
                 author: authorName,
                 headline: headline,
                 author_url: authorUrl,
+                post_url: directPostUrl,
                 company: company,
                 is_verified: isVerified,
                 raw_timestamp: rawTime,
@@ -272,9 +295,14 @@ class LinkedInAgentTools:
 
             if fp not in self.evaluated_fingerprints and len(c["content"]) > 15:
                 c["parsed_age_days"] = round(parse_post_age(c["raw_timestamp"]), 2)
-                is_auth, auth_hint = verify_bde_lead_authenticity(c["author"], c["headline"], "", c["company"])
+                is_auth, auth_hint = verify_bde_lead_authenticity(c["author"], c["headline"], "", c["company"], c["content"])
+                has_intent, intent_hint = verify_sales_buying_intent(c["content"], c["headline"])
                 c["bde_authenticity_check"] = "PASS: Direct Founder/Exec" if is_auth else f"FLAGGED: {auth_hint}"
+                c["sales_intent_check"] = f"HIGH INTENT: {intent_hint}" if has_intent else f"LOW/NO INTENT: {intent_hint}"
+                c["buying_intent_signal"] = intent_hint if has_intent else "No technical buying intent"
                 unevaluated_cards.append(c)
+
+        self.last_scanned_cards = unevaluated_cards
 
         if len(unevaluated_cards) == 0:
             self.consecutive_zero_card_scans += 1
@@ -609,9 +637,13 @@ class LinkedInAgentTools:
             "observation": f"Scrolled {steps} step(s). Total cards in DOM: {total_cards} (+{new_cards_loaded} new). Call scan_and_read_cards to inspect the newly loaded cards."
         }
 
-    def qualify_and_save_lead(self, card_index: int, author: str, profile_url: str, headline: str, role: str, company: str, location: str, fit_score: int, custom_pitch: str, reasoning: str):
+    def qualify_and_save_lead(self, card_index: int, author: str, profile_url: str, headline: str, role: str, company: str, location: str, fit_score: int, custom_pitch: str, reasoning: str, buying_intent_signal: str = ""):
         # Strict Authenticity Guardrail: Disqualify VCs, media, curators, recruiters, and non-founders
-        is_authentic, auth_reason = verify_bde_lead_authenticity(author=author, headline=headline, role=role, company=company)
+        card_content = ""
+        if card_index < len(self.last_scanned_cards):
+            card_content = self.last_scanned_cards[card_index].get("content", "")
+
+        is_authentic, auth_reason = verify_bde_lead_authenticity(author=author, headline=headline, role=role, company=company, post_content=card_content)
         if not is_authentic:
             self.logger.warning(f"Rejected lead qualification for {author}: {auth_reason}")
             print(f"      ⚠️ Disqualified Lead Candidate: '{author}' — Reason: {auth_reason}")
@@ -619,10 +651,28 @@ class LinkedInAgentTools:
                 "status": "lead_disqualified",
                 "author": author,
                 "rejection_reason": auth_reason,
-                "observation": f"Disqualified lead candidate '{author}'. Reason: {auth_reason}. Lead MUST be an authentic direct Founder, Co-Founder, CEO, CTO, or VP of Engineering of their own software/AI startup (like Billy Jeremijenko), NOT a VC, accelerator, scout, or media page. Call skip_card or inspect next card."
+                "observation": f"Disqualified lead candidate '{author}'. Reason: {auth_reason}. Lead MUST be an authentic direct Founder, Co-Founder, CEO, CTO, or VP of Engineering of their own software/AI startup, NOT a recruiter, broker, scout, or media page. Call skip_card or inspect next card."
+            }
+
+        # Strict B2B Sales Intent Filter: Post MUST express active technical/MVP/building need
+        has_intent, auto_intent_signal = verify_sales_buying_intent(card_content or reasoning, headline)
+        intent_signal = buying_intent_signal or (auto_intent_signal if has_intent else "")
+        if not intent_signal and not has_intent:
+            self.logger.warning(f"Rejected lead qualification for {author}: {auto_intent_signal}")
+            print(f"      ⚠️ Disqualified Lead Candidate: '{author}' — No Commercial Buying Intent: {auto_intent_signal}")
+            return {
+                "status": "lead_disqualified",
+                "author": author,
+                "rejection_reason": auto_intent_signal,
+                "observation": f"Disqualified lead candidate '{author}'. Reason: {auto_intent_signal}. For sales, the candidate post MUST express an active development need, MVP build, technical problem, or hiring for builders/engineers. Call skip_card."
             }
 
         post_url = ""
+        # Check pre-extracted post URL from card scan first
+        if card_index < len(self.last_scanned_cards):
+            pre_url = self.last_scanned_cards[card_index].get("post_url", "")
+            if pre_url and "unknown" not in pre_url:
+                post_url = pre_url
 
         # Step 1: Setup in-page clipboard hook before clicking
         try:
@@ -638,64 +688,45 @@ class LinkedInAgentTools:
                 }
             """)
 
-            # Step 2: Precisely target the 3-dots button INSIDE the specific post card (avoiding page filter dropdowns)
+            # Step 2: Precisely target the 3-dots control menu button for this card
             click_dots_js = f"""
-            const commentBtns = Array.from(document.querySelectorAll('button[aria-label*="Comment" i], button[aria-label*="comment"]'));
-            if ({card_index} >= commentBtns.length) return false;
-            let curr = commentBtns[{card_index}].parentElement;
-            let postCard = null;
-            for (let d = 0; d < 25; d++) {{
-                if (!curr || curr === document.body || curr.tagName === "MAIN") break;
-                const hasAuthor = !!curr.querySelector('a[href*="/in/"]');
-                const innerComments = curr.querySelectorAll('button[aria-label*="Comment" i], button[aria-label*="comment"]').length;
-                if (hasAuthor && innerComments === 1) {{
-                    postCard = curr;
-                    if (curr.parentElement && curr.parentElement.querySelectorAll('button[aria-label*="Comment" i]').length > 1) break;
-                }} else if (innerComments > 1) break;
-                curr = curr.parentElement;
-            }}
-            if (!postCard) return false;
-
-            const dotsBtn = postCard.querySelector(
-                'button[aria-label*="control menu" i], ' +
-                'button[aria-label*="More actions" i], ' +
-                'button[aria-label*="options" i], ' +
-                'button.feed-shared-control-menu__trigger, ' +
-                '.feed-shared-control-menu button'
-            );
-            if (!dotsBtn) return false;
-            dotsBtn.scrollIntoView({{ block: "nearest" }});
-            dotsBtn.click();
+            const dots = Array.from(document.querySelectorAll('button[aria-label*="control menu" i], button[aria-label*="More actions" i], button[aria-label*="options" i]'));
+            if ({card_index} >= dots.length) return false;
+            dots[{card_index}].scrollIntoView({{ block: "center" }});
+            dots[{card_index}].click();
             return true;
             """
             clicked_dots = self.driver.execute_script(click_dots_js)
+            clicked_copy = False
             if clicked_dots:
-                time.sleep(1.0)
-                # Click [data-view-name="feed-control-menu-copy-link"] or "Copy link to post"
+                time.sleep(1.2)
+                # Click the "Copy link to post" item (dispatching click on both leaf <p> and container <div>)
                 click_copy_js = """
-                const copyBtn = document.querySelector('[data-view-name="feed-control-menu-copy-link"]');
-                if (copyBtn) {
-                    copyBtn.click();
-                    return true;
-                }
-                const items = Array.from(document.querySelectorAll('[role="menuitem"], div.artdeco-dropdown__item, button, span, li'));
-                for (const it of items) {
-                    const txt = (it.innerText || "").trim().toLowerCase();
-                    if (txt.includes("copy link to post") || txt === "copy link") {
-                        it.click();
-                        return true;
+                const candidates = [];
+                document.querySelectorAll("*").forEach(el => {
+                    const t = (el.innerText || "").trim().toLowerCase();
+                    if (t === "copy link to post" || t === "copy link") {
+                        candidates.push(el);
                     }
+                });
+                if (candidates.length > 0) {
+                    for (let c = candidates.length - 1; c >= 0; c--) {
+                        try { candidates[c].click(); } catch(_) {}
+                    }
+                    return { success: true, count: candidates.length };
                 }
-                return false;
+                const openMenus = Array.from(document.querySelectorAll('[role="menu"], [role="listbox"], div[class*="dropdown"]')).map(m => (m.innerText || '').substring(0, 60));
+                return { success: false, count: 0, openMenus: openMenus };
                 """
-                self.driver.execute_script(click_copy_js)
-                time.sleep(1.0)
+                copy_debug = self.driver.execute_script(click_copy_js) or {}
+                clicked_copy = copy_debug.get("success", False)
+                time.sleep(1.2)
 
                 captured = self.driver.execute_script("return window.__bdeCaptured || null;")
                 if captured and ("lnkd.in" in captured or "linkedin.com" in captured):
                     post_url = captured.strip()
 
-                # Close dropdown
+                # Close dropdown cleanly
                 self.driver.execute_script("document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', bubbles: true }));")
         except Exception as e:
             self.logger.error(f"Error capturing post URL via 3-dots: {e}")
@@ -733,8 +764,9 @@ class LinkedInAgentTools:
         # Ensure Profile URL is valid
         clean_profile_url = profile_url.strip() if profile_url else ""
 
-        # Lead record with exact requested CSV columns
+        # Lead record with exact professional B2B sales CSV columns
         lead_record = {
+            "Buying Intent Signal": intent_signal or "Active technical build / hiring need",
             "Profile URL": clean_profile_url,
             "Post URL": post_url,
             "Fit Score": fit_score,
@@ -770,6 +802,7 @@ class LinkedInAgentTools:
             "profile_url": clean_profile_url,
             "post_url": post_url,
             "fit_score": fit_score,
+            "buying_intent_signal": intent_signal or "Active technical build / hiring need",
             "total_qualified_leads_collected": total_leads,
             "observation": f"Successfully qualified and saved lead #{total_leads} ({author}). Specific post URL captured: {post_url}."
         }

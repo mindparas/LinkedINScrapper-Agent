@@ -17,18 +17,22 @@ class LiveLeadExporter:
         self.session_id = session_id
         
         # Dedicated single CSV for current session
-        self.csv_path = os.path.join(export_dir, f"usa_bde_leads_session_{self.session_id}.csv")
-        self.json_path = os.path.join(export_dir, f"usa_bde_leads_session_{self.session_id}.json")
+        self.csv_path = os.path.join(export_dir, f"usa_genuine_sales_leads_{self.session_id}.csv")
+        self.json_path = os.path.join(export_dir, f"usa_genuine_sales_leads_{self.session_id}.json")
         
-        # Quick pointer to current session leads
-        self.current_csv_path = os.path.join(export_dir, "current_session_leads.csv")
-        self.current_json_path = os.path.join(export_dir, "current_session_leads.json")
+        # Primary clean pointer to latest session leads
+        self.current_csv_path = os.path.join(export_dir, "latest_usa_sales_leads.csv")
+        self.current_json_path = os.path.join(export_dir, "latest_usa_sales_leads.json")
+        # Backward-compatibility mirror
+        self.legacy_csv_path = os.path.join(export_dir, "current_session_leads.csv")
+        self.legacy_json_path = os.path.join(export_dir, "current_session_leads.json")
         
         # Fresh start for this session: DO NOT take previous CSV files into consideration!
         self.leads = []
         
-        # Exact Requested Fields
+        # Exact Professional B2B Sales Fields
         self.fieldnames = [
+            "Buying Intent Signal",
             "Profile URL",
             "Post URL",
             "Fit Score",
@@ -41,19 +45,14 @@ class LiveLeadExporter:
         ]
         
         # Initialize brand new CSV file for this session with header only
-        with open(self.csv_path, "w", newline="", encoding="utf-8") as f:
-            writer = csv.DictWriter(f, fieldnames=self.fieldnames)
-            writer.writeheader()
+        for path in [self.csv_path, self.current_csv_path, self.legacy_csv_path]:
+            with open(path, "w", newline="", encoding="utf-8") as f:
+                writer = csv.DictWriter(f, fieldnames=self.fieldnames)
+                writer.writeheader()
             
-        with open(self.current_csv_path, "w", newline="", encoding="utf-8") as f:
-            writer = csv.DictWriter(f, fieldnames=self.fieldnames)
-            writer.writeheader()
-            
-        with open(self.json_path, "w", encoding="utf-8") as f:
-            json.dump([], f, indent=2)
-            
-        with open(self.current_json_path, "w", encoding="utf-8") as f:
-            json.dump([], f, indent=2)
+        for path in [self.json_path, self.current_json_path, self.legacy_json_path]:
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump([], f, indent=2)
 
     def append_lead(self, lead_dict):
         prof = (lead_dict.get("Profile URL") or "").strip().lower()
@@ -75,15 +74,12 @@ class LiveLeadExporter:
 
         self.leads.append(lead_dict)
         # Always append to the SAME single CSV file for this session
-        with open(self.csv_path, "a", newline="", encoding="utf-8") as f:
-            writer = csv.DictWriter(f, fieldnames=self.fieldnames)
-            writer.writerow(lead_dict)
-        with open(self.current_csv_path, "a", newline="", encoding="utf-8") as f:
-            writer = csv.DictWriter(f, fieldnames=self.fieldnames)
-            writer.writerow(lead_dict)
-        with open(self.json_path, "w", encoding="utf-8") as f:
-            json.dump(self.leads, f, indent=2, ensure_ascii=False)
-        with open(self.current_json_path, "w", encoding="utf-8") as f:
-            json.dump(self.leads, f, indent=2, ensure_ascii=False)
+        for path in [self.csv_path, self.current_csv_path, self.legacy_csv_path]:
+            with open(path, "a", newline="", encoding="utf-8") as f:
+                writer = csv.DictWriter(f, fieldnames=self.fieldnames)
+                writer.writerow(lead_dict)
+        for path in [self.json_path, self.current_json_path, self.legacy_json_path]:
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump(self.leads, f, indent=2, ensure_ascii=False)
         return True
 

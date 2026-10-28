@@ -60,24 +60,30 @@ def run_autonomous_agent(driver, niche, target_limit, exporter, memory, logger):
         f"  * Avoid 'past-24h' during US nighttime as global feeds will be dominated by Asian/European candidates.\n\n"
     )
 
-    system_prompt = f"""You are an elite, fully autonomous Business Development Executive (BDE) AI Agent discovering prospective client leads on LinkedIn.
+    system_prompt = f"""You are an elite, fully autonomous Business Development Executive (BDE) AI Agent discovering prospective high-intent sales client leads on LinkedIn.
 AGENCY SERVICE / NICHE: {niche}
 TARGET GEOGRAPHY: United States ONLY (User is working remotely from India; you must strictly eliminate India, Pakistan, UK, and international leads).
-ROLE RESTRICTION: Absolutely NO HR managers, recruiters, staffing agencies, bench sales reps, job seekers, OR INTERMEDIARIES (VCs, investors, accelerators, media curators).
-IDEAL CLIENTS: Authentic direct decision-makers (Founders, Co-Founders, CEOs, CTOs, COOs, VPs of Engineering) of their own software/AI startup who are building an MVP or hiring founding engineers.
+ROLE RESTRICTION: Absolutely NO HR managers, recruiters, headhunters, staffing brokers (e.g. people connecting professionals/candidates), job seekers, OR INTERMEDIARIES (VCs, investors, accelerators, media curators).
+IDEAL CLIENTS (SALES-READY LEADS): Authentic direct decision-makers (Founders, Co-Founders, CEOs, CTOs, VPs of Engineering) of tech/software startups who have an ACTIVE TECHNICAL BUYING OR BUILDING NEED (e.g. building an MVP, seeking dev shop/agency, needing external engineering help, looking for AI development partners, or hiring founding builders).
 
 SESSION PERSISTENT CONTEXT & ISOLATED CSV:
 - Current Session CSV: {exporter.csv_path} (Mirrored to: {exporter.current_csv_path})
 - Current Session Leads Collected: {len(exporter.leads)} (Session starts fresh with 0 previous leads)
-{feedback_section}{history_section}{us_time_guidance}CRITICAL OPERATIONAL INSTRUCTIONS & USA-ONLY SENSING STRATEGY:
-1. THE 3 MANDATORY USA LEAD MAGNETS (EMPIRICAL TRUTH):
-   LinkedIn content search has NO native country filter. Generic phrases like "building AI MVP team" or "AI startup hiring engineers" match globally and return 90%+ international candidates (India, Africa, Vietnam, Poland).
+{feedback_section}{history_section}{us_time_guidance}CRITICAL OPERATIONAL INSTRUCTIONS & USA HIGH-INTENT SALES STRATEGY:
+1. STRICT COMMERCIAL BUYING INTENT FILTER:
+   - A serious sales lead is NOT just anyone with "Founder" in their headline.
+   - The candidate's post MUST express an active development need, MVP build, technical problem, or engineering hiring need.
+   - REJECT immediately if the author is a recruiter, headhunter, career coach, or talent broker (e.g., "connecting professionals", "executive search", "staffing").
+   - REJECT generic motivational posts, news links, or self-promotional thought leadership with no active engineering requirement.
+
+2. THE 3 MANDATORY USA LEAD MAGNETS:
+   LinkedIn content search has NO native country filter. Generic phrases match globally and return 90%+ international candidates.
    To guarantee high-yield USA leads, EVERY query you synthesize MUST incorporate at least one of these 3 US Lead Magnets:
    a) US Tech Hub Anchoring:
-      Pair founder intent with specific US metro hubs:
+      Pair buyer intent with specific US metro hubs:
       - "San Francisco" "founding engineer"
-      - "Austin" "founding engineer"
-      - "NYC" "first engineer"
+      - "Austin" "building MVP" OR "founding engineer"
+      - "NYC" "first engineer" OR "dev shop"
       - "Bay Area" "building MVP"
       - "Seattle" "stealth AI"
    b) US Startup Accelerators:
@@ -85,18 +91,18 @@ SESSION PERSISTENT CONTEXT & ISOLATED CSV:
       - YC "founding engineer" hiring
       - "Techstars" "founding engineer"
       - "South Park Commons" hiring
-   c) US Hiring Constraints & Timezones:
-      - "US only" "founding engineer"
-      - "US work authorization" "founding engineer"
-      - "EST" OR "PST" "first engineer"
+   c) US Buying & Building Signals:
+      - "looking for an agency" OR "dev shop" MVP
+      - "need help building" (MVP OR software OR app)
+      - "recommend a dev" OR "recommend an agency"
 
-2. EXACT PHRASE QUOTING RULES:
+3. EXACT PHRASE QUOTING RULES:
    - Enclose exact multi-word cities or compound titles in double quotes: "San Francisco", "Austin", "founding engineer", "first engineer", "US only".
    - Do NOT quote single generic words like engineer or startup (leave unquoted for stem matching).
    - NEVER wrap full sentences in quotes.
    - NEVER put "United States" or "USA" in the query box (it yields 0 results because real US founders don't write "USA").
 
-3. COGNITIVE REASONING & STRATEGY TRANSPARENCY:
+4. COGNITIVE REASONING & STRATEGY TRANSPARENCY:
    - For EVERY execute_search call, you must explicitly articulate:
      * target_objective: Exactly what prospective client persona or goal you want to achieve with this search.
      * query: The US-anchored search keywords you autonomously synthesized.
@@ -104,13 +110,13 @@ SESSION PERSISTENT CONTEXT & ISOLATED CSV:
      * feasibility_analysis: Will this query achieve the objective, what posts will it attract, and why will it avoid noise and recruiters?
      * developer_feedback_alignment: Explicitly how this query strictly obeys and incorporates all developer feedback.
 
-4. DEVELOPER DIRECTIVES ARE TOP PRIORITY:
+5. DEVELOPER DIRECTIVES ARE TOP PRIORITY:
    - Always prioritize and strictly obey any developer feedback, guidance, or critique provided. Never repeat a behavior or query that the developer criticized.
 
-5. EARLY FEED BAILOUT:
+6. EARLY FEED BAILOUT:
    - If 2 consecutive cards in a search result fail USA qualification or belong to recruiters/freelancers, STOP scrolling that feed immediately! Formulate an improved query autonomously targeting a different US tech hub or accelerator.
 
-6. DEEP PROFILE LOCATION VERIFICATION:
+7. DEEP PROFILE LOCATION VERIFICATION:
    - Inspect profile top-card for 100% US presence before qualifying.
 
 7. SINGLE CSV ACCUMULATION:
@@ -283,22 +289,24 @@ SESSION PERSISTENT CONTEXT & ISOLATED CSV:
                     location=args.get("location", "USA"),
                     fit_score=args.get("fit_score", 85),
                     custom_pitch=args.get("custom_pitch", ""),
-                    reasoning=args.get("reasoning", "")
+                    reasoning=args.get("reasoning", ""),
+                    buying_intent_signal=args.get("buying_intent_signal", "")
                 )
                 log_tool_result(result["observation"])
 
                 # Interactive prompt immediately when a genuine lead is qualified
                 if result.get("status") == "lead_saved_successfully":
                     print("\n" + "=" * 80)
-                    print(f"{Style.GREEN}{Style.BOLD}🎯 GENUINE VERIFIED USA LEAD DISCOVERED & SAVED!{Style.RESET}")
+                    print(f"{Style.GREEN}{Style.BOLD}🎯 GENUINE VERIFIED USA SALES LEAD DISCOVERED & SAVED!{Style.RESET}")
                     print(f"   👤 Author: {Style.BOLD}{args.get('author')}{Style.RESET}")
                     print(f"   💼 Role & Company: {args.get('role')} @ {args.get('company') or 'Unknown'}")
                     print(f"   📍 Verified Location: {Style.GREEN}{args.get('location')}{Style.RESET}")
+                    print(f"   🔥 Buying Intent: {Style.YELLOW}{result.get('buying_intent_signal')}{Style.RESET}")
                     print(f"   🔗 Profile URL: {Style.CYAN}{result.get('profile_url')}{Style.RESET}")
                     print(f"   📌 Authentic Post URL: {Style.CYAN}{result.get('post_url')}{Style.RESET}")
                     print(f"   ⭐ Fit Score: {args.get('fit_score')}/100")
                     print(f"   💡 Custom Pitch Hook: {args.get('custom_pitch')}")
-                    print(f"   📁 Saved To Session CSV: {Style.CYAN}{exporter.csv_path}{Style.RESET} (Total: {len(exporter.leads)} leads in this session)")
+                    print(f"   📁 Saved To CSV: {Style.CYAN}{exporter.csv_path}{Style.RESET} (Total: {len(exporter.leads)} leads in this session)")
                     print("=" * 80)
                     print(f"{Style.CYAN}{Style.BOLD}👉 Found {len(exporter.leads)} genuine lead(s) in this session. Do you want the agent to continue searching for more?{Style.RESET}")
                     print(f"   {Style.GREEN}[ENTER / Y]{Style.RESET} Yes, search for the next genuine lead in this session (appends to same CSV)")
