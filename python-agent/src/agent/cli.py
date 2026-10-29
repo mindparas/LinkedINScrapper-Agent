@@ -24,14 +24,18 @@ def main():
     print(f"🧠 Persistent memory loaded from: {Style.CYAN}{memory.filepath}{Style.RESET}")
 
     # Agency Niche (Direct launch; press ENTER for default)
-    try:
-        niche_input = input(f"\n{Style.CYAN}Enter your agency service/niche (press ENTER for 'custom software & AI MVP engineering'): {Style.RESET}").strip()
-    except (EOFError, KeyboardInterrupt):
-        niche_input = ""
+    if os.environ.get("NON_INTERACTIVE", "0") == "1":
+        niche_input = os.environ.get("NICHE", "")
+    else:
+        try:
+            niche_input = input(f"\n{Style.CYAN}Enter your agency service/niche (press ENTER for 'custom software & AI MVP engineering'): {Style.RESET}").strip()
+        except (EOFError, KeyboardInterrupt):
+            niche_input = ""
     niche = niche_input if niche_input else "custom software & AI MVP engineering"
 
-    # Search directly until at least 1 genuine lead is found, then interactively prompt user
-    target_limit = 1
+    # Search directly until target limit is found (can be specified via TARGET_LIMIT env var)
+    target_limit_env = os.environ.get("TARGET_LIMIT")
+    target_limit = int(target_limit_env) if target_limit_env and target_limit_env.isdigit() else 1
 
     profile_dir = os.path.join(BASE_DIR, "linkedin_chrome_profile")
     # Single Dedicated Session CSV Exporter: maintains 1 fresh CSV for this session, ignores previous CSV files
@@ -78,6 +82,10 @@ def main():
             print(f"   {Style.BLUE}[3]{Style.RESET} View current session leads & memory summary")
             print(f"   {Style.RED}[4 / Q]{Style.RESET} Quit & Close Browser")
             print("=" * 80)
+
+            if os.environ.get("NON_INTERACTIVE", "0") == "1":
+                print(f"\n{Style.YELLOW}Autonomous mode active: session target achieved. Closing session.{Style.RESET}")
+                break
 
             try:
                 choice = input(f"\n{Style.CYAN}Choose an option (press ENTER to re-run in same session): {Style.RESET}").strip().lower()
@@ -130,10 +138,11 @@ def main():
         print(f"{Style.GREEN}{Style.BOLD}🌐 PERSISTENT BROWSER WINDOW REMAINS OPEN FOR YOUR INSPECTION.{Style.RESET}")
         print("You can view the LinkedIn tabs, explore search results, and inspect verified profiles.")
         print("=" * 80)
-        try:
-            input(f"\n{Style.DIM}Press ENTER here in terminal whenever you are ready to close the browser session...{Style.RESET}")
-        except (EOFError, KeyboardInterrupt):
-            pass
+        if os.environ.get("NON_INTERACTIVE", "0") != "1":
+            try:
+                input(f"\n{Style.DIM}Press ENTER here in terminal whenever you are ready to close the browser session...{Style.RESET}")
+            except (EOFError, KeyboardInterrupt):
+                pass
         try:
             driver.quit()
         except Exception:

@@ -205,7 +205,7 @@ AGENT_TOOLS = [
         "type": "function",
         "function": {
             "name": "finish_campaign",
-            "description": "Finish the lead generation campaign when the target lead count is achieved or satisfaction is reached.",
+            "description": "Finish the lead generation campaign ONLY when the target lead count is fully achieved. DO NOT call this if you have not qualified the requested number of leads; instead formulate a new search query or scroll to discover more leads.",
             "parameters": {
                 "type": "object",
                 "properties": {

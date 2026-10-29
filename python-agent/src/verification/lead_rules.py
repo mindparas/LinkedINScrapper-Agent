@@ -31,7 +31,15 @@ STRONG_BUYING_INTENT_SIGNALS = [
     "looking for builders", "need builders", "contractors", "contract developer", "contract engineer",
     "fractional cto", "freelance engineer", "freelance developer", "seeking a developer",
     "seeking developers", "seeking engineers", "founding engineer", "first engineer",
-    "lead engineer", "build our platform", "building our platform", "develop our mvp"
+    "lead engineer", "build our platform", "building our platform", "develop our mvp",
+    "hiring our first", "hiring first", "hiring founding", "looking for our first",
+    "looking for a founding", "seeking a founding", "seeking founding",
+    "build our product", "building our product", "build our app", "building our app",
+    "build the mvp", "building a new app", "build an app", "need a developer", "need an engineer",
+    "hiring fullstack", "hiring full stack", "hiring software engineer", "hiring engineer", "hiring engineers",
+    "looking for a developer", "looking for an engineer", "looking for engineers",
+    "need a technical co-founder", "looking for a technical co-founder", "seeking a technical co-founder",
+    "building in stealth", "stealth startup", "stealth ai", "looking for a dev"
 ]
 
 def verify_bde_lead_authenticity(author: str, headline: str, role: str = "", company: str = "", post_content: str = "") -> tuple:
@@ -74,6 +82,16 @@ def verify_sales_buying_intent(post_content: str, headline: str = "") -> tuple:
     content_lower = (post_content or "").lower()
     if len(content_lower) < 25:
         return False, "Post content is too short to establish any genuine project or technical buying intent"
+
+    # Disqualify if post indicates the role or hiring is already closed/filled
+    role_closed_signals = [
+        "role filled", "role is filled", "position filled", "position is filled",
+        "hiring closed", "filled the role", "offer accepted", "found our founding engineer",
+        "found our engineer", "no longer hiring", "filled our founding"
+    ]
+    for rc in role_closed_signals:
+        if rc in content_lower:
+            return False, f"Post indicates technical role or hiring is already filled/closed: '{rc}'"
 
     # Disqualify if post itself is an overt recruiter / headhunter broadcast
     recruiter_pitch = [

@@ -54,6 +54,29 @@ class LinkedInAgentTools:
         self.consecutive_zero_card_scans = 0
         self.last_dom_card_count = 0
         self.last_scanned_cards = []
+        self.executed_queries = set()
+
+    PROVEN_US_QUERIES = [
+        "Seattle founding engineer",
+        "Austin founding engineer",
+        "NYC founding engineer",
+        "San Francisco founding engineer",
+        "Bay Area founding engineer",
+        "YC founding engineer",
+        "South Park Commons founding engineer",
+        "Techstars founding engineer",
+        "AI MVP founding engineer",
+        "Boston founding engineer",
+        "Denver founding engineer",
+        "founding engineer equity startup",
+        "Chicago founding engineer"
+    ]
+
+    def get_next_recommended_query(self):
+        for q in self.PROVEN_US_QUERIES:
+            if q.lower() not in [x.lower() for x in self.executed_queries]:
+                return q
+        return "Seattle founding engineer"
 
     @property
     def current_expected_output(self):
@@ -97,6 +120,7 @@ class LinkedInAgentTools:
         self.last_dom_card_count = 0
         clean_q = clean_linkedin_boolean_query(query)
         self.current_query = clean_q
+        self.executed_queries.add(clean_q.lower())
         self.current_freshness = freshness if freshness in ["past-24h", "past-week"] else "past-24h"
         self.current_target_objective = target_objective
         self.current_rationale = query_rationale
@@ -245,15 +269,15 @@ class LinkedInAgentTools:
 
             // Direct extraction of exact post URL from card DOM
             let directPostUrl = "";
-            const postAnchor = c.querySelector('a[href*="/feed/update/urn:li:"], a[href*="/posts/"]');
+            const postAnchor = c.querySelector('a[href*="/feed/update/urn:li:"], a[href*="/posts/"], a.update-components-actor__sub-description-link, a[href*="/feed/update/"]');
             if (postAnchor && postAnchor.href) {
                 directPostUrl = postAnchor.href.split("?")[0];
             } else {
                 const dataUrn = c.getAttribute('data-urn') || c.getAttribute('data-activity-urn') || c.getAttribute('data-id');
-                if (dataUrn && dataUrn.includes('urn:li:activity:')) {
+                if (dataUrn && dataUrn.includes('urn:li:')) {
                     directPostUrl = `https://www.linkedin.com/feed/update/${dataUrn}/`;
                 } else {
-                    const childWithUrn = c.querySelector('[data-urn*="urn:li:activity:"], [data-id*="urn:li:activity:"]');
+                    const childWithUrn = c.querySelector('[data-urn*="urn:li:"], [data-id*="urn:li:"]');
                     if (childWithUrn) {
                         const cUrn = childWithUrn.getAttribute('data-urn') || childWithUrn.getAttribute('data-id');
                         if (cUrn) directPostUrl = `https://www.linkedin.com/feed/update/${cUrn}/`;
@@ -307,11 +331,11 @@ class LinkedInAgentTools:
         if len(unevaluated_cards) == 0:
             self.consecutive_zero_card_scans += 1
             if self.consecutive_zero_card_scans >= 2 or self.consecutive_empty_scrolls >= 1:
+                next_q = self.get_next_recommended_query()
                 obs = (
                     f"Extracted 0 new post cards from the DOM (all visible cards have already been evaluated or qualified). "
                     f"🛑 FEED EXHAUSTED for query '{self.current_query}'. STOP scrolling on this feed. "
-                    f"You MUST formulate and execute a new search query targeting a different US Tech Hub (e.g. 'Austin', 'San Francisco', 'NYC', 'Seattle') "
-                    f"or a US Accelerator (e.g. 'YC founding engineer')."
+                    f"Recommended next proven US query: '{next_q}'. Execute search with this query now."
                 )
             else:
                 obs = "Extracted 0 new post cards from the DOM (all visible cards were already evaluated). You may scroll once (steps=1) to attempt loading more cards, or execute a new search query."
@@ -618,6 +642,7 @@ class LinkedInAgentTools:
             }
 
         if at_end or self.consecutive_empty_scrolls >= 2:
+            next_q = self.get_next_recommended_query()
             return {
                 "total_cards_in_dom": total_cards,
                 "scroll_count": self.scroll_count_on_query,
@@ -625,8 +650,7 @@ class LinkedInAgentTools:
                 "observation": (
                     f"🛑 FEED EXHAUSTED: Scrolling did not load any new cards (DOM stopped at {total_cards} cards). "
                     f"The LinkedIn feed for '{self.current_query}' is exhausted. Do NOT call scroll_feed again! "
-                    f"You MUST immediately execute a new search query targeting a different US Metro (e.g. 'Austin', 'San Francisco', 'NYC', 'Seattle') "
-                    f"or a US Accelerator (e.g. 'YC founding engineer')."
+                    f"Recommended next proven US query: '{next_q}'. Execute search with this query now."
                 )
             }
 
@@ -656,8 +680,7 @@ class LinkedInAgentTools:
 
         # Strict B2B Sales Intent Filter: Post MUST express active technical/MVP/building need
         has_intent, auto_intent_signal = verify_sales_buying_intent(card_content or reasoning, headline)
-        intent_signal = buying_intent_signal or (auto_intent_signal if has_intent else "")
-        if not intent_signal and not has_intent:
+        if not has_intent:
             self.logger.warning(f"Rejected lead qualification for {author}: {auto_intent_signal}")
             print(f"      ⚠️ Disqualified Lead Candidate: '{author}' — No Commercial Buying Intent: {auto_intent_signal}")
             return {
@@ -666,6 +689,7 @@ class LinkedInAgentTools:
                 "rejection_reason": auto_intent_signal,
                 "observation": f"Disqualified lead candidate '{author}'. Reason: {auto_intent_signal}. For sales, the candidate post MUST express an active development need, MVP build, technical problem, or hiring for builders/engineers. Call skip_card."
             }
+        intent_signal = auto_intent_signal
 
         post_url = ""
         # Check pre-extracted post URL from card scan first
@@ -688,12 +712,32 @@ class LinkedInAgentTools:
                 }
             """)
 
-            # Step 2: Precisely target the 3-dots control menu button for this card
+            # Step 2: Precisely target the 3-dots control menu button INSIDE THIS SPECIFIC CARD
             click_dots_js = f"""
-            const dots = Array.from(document.querySelectorAll('button[aria-label*="control menu" i], button[aria-label*="More actions" i], button[aria-label*="options" i]'));
-            if ({card_index} >= dots.length) return false;
-            dots[{card_index}].scrollIntoView({{ block: "center" }});
-            dots[{card_index}].click();
+            const commentBtns = Array.from(document.querySelectorAll('button[aria-label*="Comment" i], button[aria-label*="comment"]'));
+            const cards = [];
+            for (let i = 0; i < commentBtns.length; i++) {{
+                let curr = commentBtns[i].parentElement;
+                let postCard = null;
+                for (let d = 0; d < 25; d++) {{
+                    if (!curr || curr === document.body || curr.tagName === "MAIN") break;
+                    const hasAuthor = !!curr.querySelector('a[href*="/in/"]');
+                    const innerComments = curr.querySelectorAll('button[aria-label*="Comment" i], button[aria-label*="comment"]').length;
+                    const text = (curr.innerText || "").trim();
+                    if (hasAuthor && innerComments === 1 && text.length > 35) {{
+                        postCard = curr;
+                        if (curr.parentElement && curr.parentElement.querySelectorAll('button[aria-label*="Comment" i]').length > 1) break;
+                    }} else if (innerComments > 1) break;
+                    curr = curr.parentElement;
+                }}
+                if (postCard && !cards.includes(postCard)) cards.push(postCard);
+            }}
+            if ({card_index} >= cards.length) return false;
+            const targetCard = cards[{card_index}];
+            const dot = targetCard.querySelector('button[aria-label*="control menu" i], button[aria-label*="More actions" i], button[aria-label*="options" i]');
+            if (!dot) return false;
+            dot.scrollIntoView({{ block: "center" }});
+            dot.click();
             return true;
             """
             clicked_dots = self.driver.execute_script(click_dots_js)
@@ -731,21 +775,30 @@ class LinkedInAgentTools:
         except Exception as e:
             self.logger.error(f"Error capturing post URL via 3-dots: {e}")
 
-        # Step 3: If 3-dots clipboard didn't capture, inspect postCard element for direct post anchor or activity URN
+        # Step 3: If 3-dots clipboard didn't capture, inspect postCard element for direct post anchor or activity/share URN
         if not post_url:
             try:
                 card_fallback_info = self.driver.execute_script(f"""
                     const commentBtns = Array.from(document.querySelectorAll('button[aria-label*="Comment" i], button[aria-label*="comment"]'));
-                    if ({card_index} >= commentBtns.length) return null;
-                    let curr = commentBtns[{card_index}].parentElement;
-                    for (let d = 0; d < 25; d++) {{
-                        if (!curr || curr === document.body) break;
-                        const a = curr.querySelector('a[href*="/feed/update/urn:li:"], a[href*="/posts/"]');
-                        if (a) return {{ directUrl: a.href.split('?')[0] }};
-                        const urn = curr.getAttribute('data-urn') || curr.getAttribute('data-activity-urn') || curr.getAttribute('data-id');
-                        if (urn && urn.includes('urn:li:activity:')) return {{ activityUrn: urn }};
-                        curr = curr.parentElement;
+                    const cards = [];
+                    for (let i = 0; i < commentBtns.length; i++) {{
+                        let curr = commentBtns[i].parentElement;
+                        let postCard = null;
+                        for (let d = 0; d < 25; d++) {{
+                            if (!curr || curr === document.body || curr.tagName === "MAIN") break;
+                            const hasAuthor = !!curr.querySelector('a[href*="/in/"]');
+                            const innerComments = curr.querySelectorAll('button[aria-label*="Comment" i]').length;
+                            if (hasAuthor && innerComments === 1) {{ postCard = curr; break; }}
+                            curr = curr.parentElement;
+                        }}
+                        if (postCard && !cards.includes(postCard)) cards.push(postCard);
                     }}
+                    if ({card_index} >= cards.length) return null;
+                    const card = cards[{card_index}];
+                    const a = card.querySelector('a[href*="/feed/update/urn:li:"], a[href*="/posts/"], a.update-components-actor__sub-description-link, a[href*="/feed/update/"]');
+                    if (a && a.href) return {{ directUrl: a.href.split('?')[0] }};
+                    const urn = card.getAttribute('data-urn') || card.getAttribute('data-activity-urn') || card.getAttribute('data-id');
+                    if (urn && urn.includes('urn:li:')) return {{ activityUrn: urn }};
                     return null;
                 """)
                 if card_fallback_info:

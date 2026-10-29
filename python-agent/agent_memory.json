@@ -550,6 +550,406 @@
       "qualified_count": 1,
       "developer_guidance": "",
       "outcome": "1 genuine lead(s) qualified"
+    },
+    {
+      "timestamp": "2026-10-28T18:18:56.112964",
+      "query": "Austin \"building MVP\"",
+      "freshness": "past-week",
+      "target_objective": "Discover genuine verified USA decision-maker leads for custom software & AI MVP engineering.",
+      "cards_found": 0,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "0 cards returned on LinkedIn (Zero results)"
+    },
+    {
+      "timestamp": "2026-10-28T18:20:05.545959",
+      "query": "\"San Francisco\" \"founding engineer\"",
+      "freshness": "past-week",
+      "target_objective": "Discover genuine verified USA decision-maker leads for custom software & AI MVP engineering.",
+      "cards_found": 9,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "9 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-28T18:23:20.511707",
+      "query": "Austin \"building MVP\"",
+      "freshness": "past-week",
+      "target_objective": "Discover genuine verified USA decision-maker leads for custom software & AI MVP engineering.",
+      "cards_found": 0,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "0 cards returned on LinkedIn (Zero results)"
+    },
+    {
+      "timestamp": "2026-10-28T18:23:40.694750",
+      "query": "\"San Francisco\" \"founding engineer\"",
+      "freshness": "past-week",
+      "target_objective": "Discover genuine verified USA decision-maker leads for custom software & AI MVP engineering.",
+      "cards_found": 0,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "0 cards returned on LinkedIn (Zero results)"
+    },
+    {
+      "timestamp": "2026-10-28T18:23:55.176433",
+      "query": "Austin \"founding engineer\"",
+      "freshness": "past-week",
+      "target_objective": "Discover genuine verified USA decision-maker leads for custom software & AI MVP engineering.",
+      "cards_found": 0,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "0 cards returned on LinkedIn (Zero results)"
+    },
+    {
+      "timestamp": "2026-10-28T18:25:16.807873",
+      "query": "NYC \"need help building\"",
+      "freshness": "past-week",
+      "target_objective": "Discover genuine verified USA decision-maker leads for custom software & AI MVP engineering.",
+      "cards_found": 1,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "1 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-28T18:25:27.784266",
+      "query": "\"Bay Area\" \"looking for agency\"",
+      "freshness": "past-week",
+      "target_objective": "Discover genuine verified USA decision-maker leads for custom software & AI MVP engineering.",
+      "cards_found": 0,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "0 cards returned on LinkedIn (Zero results)"
+    },
+    {
+      "timestamp": "2026-10-28T18:25:43.793752",
+      "query": "Techstars \"founding engineer\"",
+      "freshness": "past-week",
+      "target_objective": "Discover genuine verified USA decision-maker leads for custom software & AI MVP engineering.",
+      "cards_found": 0,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "0 cards returned on LinkedIn (Zero results)"
+    },
+    {
+      "timestamp": "2026-10-28T18:25:54.227895",
+      "query": "Techstars founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Discover genuine verified USA decision-maker leads for custom software & AI MVP engineering.",
+      "cards_found": 0,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "0 cards returned on LinkedIn (Zero results)"
+    },
+    {
+      "timestamp": "2026-10-28T18:26:07.912930",
+      "query": "Seattle \"need help building\"",
+      "freshness": "past-week",
+      "target_objective": "Discover genuine verified USA decision-maker leads for custom software & AI MVP engineering.",
+      "cards_found": 0,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "0 cards returned on LinkedIn (Zero results)"
+    },
+    {
+      "timestamp": "2026-10-28T18:26:28.481671",
+      "query": "YC \"looking for agency\"",
+      "freshness": "past-week",
+      "target_objective": "Discover genuine verified USA decision-maker leads for custom software & AI MVP engineering.",
+      "cards_found": 1,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "1 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-28T18:42:06.378230",
+      "query": "\"San Francisco\" \"founding engineer\"",
+      "freshness": "past-week",
+      "target_objective": "Discover genuine verified USA decision-maker leads for custom software & AI MVP engineering.",
+      "cards_found": 9,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "9 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-28T18:42:26.247569",
+      "query": "Austin \"founding engineer\"",
+      "freshness": "past-week",
+      "target_objective": "Discover genuine verified USA decision-maker leads for custom software & AI MVP engineering.",
+      "cards_found": 6,
+      "qualified_count": 1,
+      "developer_guidance": "",
+      "outcome": "1 genuine lead(s) qualified"
+    },
+    {
+      "timestamp": "2026-10-28T18:42:46.125315",
+      "query": "NYC founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Discover genuine verified USA decision-maker leads for custom software & AI MVP engineering.",
+      "cards_found": 6,
+      "qualified_count": 2,
+      "developer_guidance": "",
+      "outcome": "2 genuine lead(s) qualified"
+    },
+    {
+      "timestamp": "2026-10-28T18:59:25.646022",
+      "query": "\"San Francisco\" \"founding engineer\"",
+      "freshness": "past-week",
+      "target_objective": "Discover genuine verified USA decision-maker leads for custom software & AI MVP engineering.",
+      "cards_found": 9,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "9 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-29T09:40:16.522271",
+      "query": "\"San Francisco\" \"founding engineer\"",
+      "freshness": "past-week",
+      "target_objective": "Discover genuine verified USA decision-maker leads for custom software & AI MVP engineering.",
+      "cards_found": 9,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "9 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-29T09:40:43.482894",
+      "query": "Austin \"founding engineer\"",
+      "freshness": "past-week",
+      "target_objective": "Discover genuine verified USA decision-maker leads for custom software & AI MVP engineering.",
+      "cards_found": 9,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "9 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-29T09:42:56.265906",
+      "query": "NYC \"founding engineer\"",
+      "freshness": "past-week",
+      "target_objective": "Discover genuine verified USA decision-maker leads for custom software & AI MVP engineering.",
+      "cards_found": 6,
+      "qualified_count": 1,
+      "developer_guidance": "",
+      "outcome": "1 genuine lead(s) qualified"
+    },
+    {
+      "timestamp": "2026-10-29T09:44:05.682018",
+      "query": "Seattle founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Discover genuine verified USA decision-maker leads for custom software & AI MVP engineering.",
+      "cards_found": 6,
+      "qualified_count": 1,
+      "developer_guidance": "",
+      "outcome": "1 genuine lead(s) qualified"
+    },
+    {
+      "timestamp": "2026-10-29T09:44:54.762878",
+      "query": "\"Bay Area\" founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Discover genuine verified USA decision-maker leads for custom software & AI MVP engineering.",
+      "cards_found": 9,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "9 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-29T09:45:29.470718",
+      "query": "Techstars founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Discover genuine verified USA decision-maker leads for custom software & AI MVP engineering.",
+      "cards_found": 1,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "1 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-29T09:45:48.567249",
+      "query": "YC founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Discover genuine verified USA decision-maker leads for custom software & AI MVP engineering.",
+      "cards_found": 6,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "6 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-29T09:57:12.284357",
+      "query": "NYC founding engineer",
+      "freshness": "past-week",
+      "target_objective": "",
+      "cards_found": 3,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "3 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-29T10:10:42.220686",
+      "query": "Austin founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Discover genuine verified USA decision-maker leads for custom software & AI MVP engineering.",
+      "cards_found": 9,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "9 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-29T10:11:06.679987",
+      "query": "San Francisco founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Discover genuine verified USA decision-maker leads for custom software & AI MVP engineering.",
+      "cards_found": 0,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "0 cards returned on LinkedIn (Zero results)"
+    },
+    {
+      "timestamp": "2026-10-29T10:11:46.782937",
+      "query": "Seattle founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Discover genuine verified USA decision-maker leads for custom software & AI MVP engineering.",
+      "cards_found": 3,
+      "qualified_count": 1,
+      "developer_guidance": "",
+      "outcome": "1 genuine lead(s) qualified"
+    },
+    {
+      "timestamp": "2026-10-29T10:16:44.003964",
+      "query": "Austin founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Genuine verified USA decision-makers (Founders, CTOs) seeking custom software & AI MVP engineering services.",
+      "cards_found": 0,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "0 cards returned on LinkedIn (Zero results)"
+    },
+    {
+      "timestamp": "2026-10-29T10:17:21.193205",
+      "query": "NYC founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Genuine verified USA decision-makers (Founders, CTOs) seeking custom software & AI MVP engineering services.",
+      "cards_found": 6,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "6 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-29T10:18:02.795971",
+      "query": "San Francisco founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Genuine verified USA decision-makers (Founders, CTOs) seeking custom software & AI MVP engineering services.",
+      "cards_found": 12,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "12 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-29T10:18:54.981175",
+      "query": "Seattle founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Genuine verified USA decision-makers (Founders, CTOs) seeking custom software & AI MVP engineering services.",
+      "cards_found": 6,
+      "qualified_count": 1,
+      "developer_guidance": "",
+      "outcome": "1 genuine lead(s) qualified"
+    },
+    {
+      "timestamp": "2026-10-29T10:19:44.428969",
+      "query": "YC founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Genuine verified USA decision-makers (Founders, CTOs) seeking custom software & AI MVP engineering services, specifically from Y Combinator-backed startups.",
+      "cards_found": 6,
+      "qualified_count": 1,
+      "developer_guidance": "",
+      "outcome": "1 genuine lead(s) qualified"
+    },
+    {
+      "timestamp": "2026-10-29T10:20:23.433844",
+      "query": "Bay Area founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Genuine verified USA decision-makers (Founders, CTOs) seeking custom software & AI MVP engineering services, specifically from tech founders in the Bay Area.",
+      "cards_found": 9,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "9 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-29T10:20:33.909021",
+      "query": "Austin founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Genuine verified USA decision-makers (Founders, CTOs) seeking custom software & AI MVP engineering services, specifically from tech founders in Austin.",
+      "cards_found": 0,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "0 cards returned on LinkedIn (Zero results)"
+    },
+    {
+      "timestamp": "2026-10-29T10:20:54.562384",
+      "query": "Techstars founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Genuine verified USA decision-makers (Founders, CTOs) seeking custom software & AI MVP engineering services, specifically from seed-stage startup founders backed by Techstars.",
+      "cards_found": 1,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "1 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-29T10:21:04.196227",
+      "query": "Seattle founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Genuine verified USA decision-makers (Founders, CTOs) seeking custom software & AI MVP engineering services, specifically from tech founders in Seattle.",
+      "cards_found": 0,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "0 cards returned on LinkedIn (Zero results)"
+    },
+    {
+      "timestamp": "2026-10-29T10:21:32.744286",
+      "query": "Boston founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Genuine verified USA decision-makers (Founders, CTOs) seeking custom software & AI MVP engineering services, specifically from tech founders in Boston.",
+      "cards_found": 9,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "9 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-29T10:21:42.413016",
+      "query": "NYC founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Genuine verified USA decision-makers (Founders, CTOs) seeking custom software & AI MVP engineering services, specifically from tech founders in NYC.",
+      "cards_found": 0,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "0 cards returned on LinkedIn (Zero results)"
+    },
+    {
+      "timestamp": "2026-10-29T10:22:00.037012",
+      "query": "Los Angeles founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Genuine verified USA decision-makers (Founders, CTOs) seeking custom software & AI MVP engineering services, specifically from tech founders in Los Angeles.",
+      "cards_found": 6,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "6 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-29T10:22:50.597237",
+      "query": "Austin founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Genuine verified USA decision-makers (Founders, CTOs) seeking custom software & AI MVP engineering services.",
+      "cards_found": 0,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "0 cards returned on LinkedIn (Zero results)"
+    },
+    {
+      "timestamp": "2026-10-29T10:23:31.687728",
+      "query": "South Park Commons founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Genuine verified USA decision-makers (Founders, CTOs) seeking custom software & AI MVP engineering services.",
+      "cards_found": 3,
+      "qualified_count": 1,
+      "developer_guidance": "",
+      "outcome": "1 genuine lead(s) qualified"
     }
   ],
   "user_feedback_history": [
@@ -672,6 +1072,61 @@
       "timestamp": "2026-10-28T17:39:00.970626",
       "context": "John Kim",
       "feedback": "Focus on our AI/ML profile we need lead for sales profile which needs Us we need that geniun leads"
+    },
+    {
+      "timestamp": "2026-10-28T18:23:36.725765",
+      "context": "Search Formulation",
+      "feedback": "This query will not work"
+    },
+    {
+      "timestamp": "2026-10-28T18:23:52.246044",
+      "context": "Search Formulation",
+      "feedback": "THis one you already tried no result found"
+    },
+    {
+      "timestamp": "2026-10-28T18:25:40.856704",
+      "context": "Search Formulation",
+      "feedback": "remove all quotes"
+    },
+    {
+      "timestamp": "2026-10-29T10:11:03.681730",
+      "context": "Search Formulation",
+      "feedback": "Target Seattle founding engineer to discover early-stage AI infrastructure and startup founders"
+    },
+    {
+      "timestamp": "2026-10-29T10:16:40.803232",
+      "context": "Search Formulation",
+      "feedback": "Target NYC founding engineer to surface early-stage founders building tech products in New York"
+    },
+    {
+      "timestamp": "2026-10-29T10:18:51.875356",
+      "context": "Alexander Raud",
+      "feedback": "Target YC founding engineer to find early-stage founders backed by Y Combinator building MVPs"
+    },
+    {
+      "timestamp": "2026-10-29T10:19:41.633560",
+      "context": "Dr. Nihir Vedd",
+      "feedback": "Target Bay Area founding engineer to discover US tech founders"
+    },
+    {
+      "timestamp": "2026-10-29T10:20:30.924312",
+      "context": "Search Formulation",
+      "feedback": "Target Techstars founding engineer to discover seed-stage startup founders building tech MVPs"
+    },
+    {
+      "timestamp": "2026-10-29T10:21:00.812842",
+      "context": "Search Formulation",
+      "feedback": "Target Boston founding engineer to find East Coast tech founders and AI startups"
+    },
+    {
+      "timestamp": "2026-10-29T10:21:39.282222",
+      "context": "Search Formulation",
+      "feedback": "Target Los Angeles founding engineer to find Southern California tech and AI founders"
+    },
+    {
+      "timestamp": "2026-10-29T10:22:48.197670",
+      "context": "Search Formulation",
+      "feedback": "Target South Park Commons founding engineer to find vetted technical AI founders"
     }
   ],
   "qualified_leads": [
@@ -701,7 +1156,43 @@
       "company": "",
       "location": "Sunnyvale, California, United States",
       "fit_score": 90
+    },
+    {
+      "timestamp": "2026-10-28T18:42:43.640295",
+      "author": "Sebastian Linge Schwaiger",
+      "profile_url": "https://www.linkedin.com/in/sebastian-linge-schwaiger/",
+      "post_url": "https://www.linkedin.com/feed/update/urn:li:share:7520884543143358466/",
+      "company": "Trive",
+      "location": "NYC",
+      "fit_score": 90
+    },
+    {
+      "timestamp": "2026-10-28T18:42:46.123311",
+      "author": "Tyler Carlin",
+      "profile_url": "https://www.linkedin.com/in/tylercarlin/",
+      "post_url": "https://www.linkedin.com/feed/update/urn:li:share:7518617710663016448/",
+      "company": "Soap Payments",
+      "location": "NYC",
+      "fit_score": 85
+    },
+    {
+      "timestamp": "2026-10-29T10:19:26.964645",
+      "author": "Dr. Nihir Vedd",
+      "profile_url": "https://www.linkedin.com/in/nvedd/",
+      "post_url": "https://www.linkedin.com/feed/update/urn:li:activity:unknown",
+      "company": "GrowthStage",
+      "location": "Seattle, WA",
+      "fit_score": 90
+    },
+    {
+      "timestamp": "2026-10-29T10:23:24.600534",
+      "author": "Shukan Shah",
+      "profile_url": "https://www.linkedin.com/in/shukan-shah/",
+      "post_url": "https://www.linkedin.com/feed/update/urn:li:share:7516480788431851520/",
+      "company": "Asymptote Labs",
+      "location": "New York, United States",
+      "fit_score": 85
     }
   ],
-  "last_updated": "2026-10-28T18:09:56.990511"
+  "last_updated": "2026-10-29T10:23:31.687744"
 }

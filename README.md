@@ -56,19 +56,25 @@ LinkedIn Scrapper/
 
 ## ⚡ Quick Start
 
-### 1. Running the Autonomous AI Agent (Python)
+### 1. Running the Autonomous Lead Discovery Agent (100% Hands-Free)
 
-From the root directory or inside `python-agent/`, execute:
+To run the standalone agent where anyone only enters the number of leads:
+
+```bash
+./run_leads.sh
+```
+
+- **User Input:** Asks only for the desired number of leads (e.g. `3`) and optional search time limit (e.g. `15` min).
+- **Autonomous Execution:** The agent autonomously cycles proven US tech hub and accelerator queries, performs 3-tier USA location verification, strictly qualifies direct Founders/CTOs with commercial buying intent, and captures authentic post shortlinks.
+- **Results:** Automatically saved in `python-agent/exports/` as both CSV and JSON, with a clean summary table printed to the console upon completion.
+
+### 2. Running Interactive Mode (Developer Steering)
+
+If you want interactive control and live steering:
 
 ```bash
 ./run_pipeline.sh
 ```
-
-- **Authentication:** On first launch, a Chrome window opens. Log into your LinkedIn account once; credentials persist in `linkedin_chrome_profile/`.
-- **Target Goal:** By default, the agent searches dynamically until at least 1 genuine lead is found, presents the lead card, and prompts for your direct feedback to steer subsequent searches.
-- **Outputs:** Leads are continuously saved to `python-agent/exports/current_session_leads.csv`.
-
-For detailed architecture, tools reference, and heuristic rules, see the **[Python Agent Guide](python-agent/README.md)**.
 
 ---
 

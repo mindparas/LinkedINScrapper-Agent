@@ -15,16 +15,15 @@ from src.config import (
 from src.tools.agent_tools import LinkedInAgentTools
 from src.tools.schemas import AGENT_TOOLS
 
-def run_autonomous_agent(driver, niche, target_limit, exporter, memory, logger):
+def run_autonomous_agent(driver, niche, target_limit, exporter, memory, logger, max_duration_seconds=None):
     """
     Core ReAct Cognitive Loop for Autonomous BDE Lead Discovery.
     Orchestrates LLM decision making, tool calls, and developer feedback loops.
     """
+    # Fresh Session: Start completely clean every run!
+    # Do NOT load past feedback guidance or old failure logs into the active session.
+    # Directives are only gathered dynamically at runtime during the current session.
     active_developer_directives = []
-    memory_summary = memory.get_memory_summary()
-    for fb in memory_summary.get('user_feedback_guidance', []):
-        if fb.get('feedback'):
-            active_developer_directives.append(fb.get('feedback'))
 
     tools_engine = LinkedInAgentTools(
         driver=driver,
@@ -34,19 +33,9 @@ def run_autonomous_agent(driver, niche, target_limit, exporter, memory, logger):
         active_developer_directives=active_developer_directives
     )
 
-    feedback_section = ""
-    if active_developer_directives:
-        feedback_section = "- ACTIVE DEVELOPER DIRECTIVES (STRICT COMPLIANCE REQUIRED - TOP PRIORITY):\n" + "\n".join(
-            [f"  * \"{directive}\"" for directive in active_developer_directives]
-        ) + "\n\n"
-
-    recent_executions = memory_summary.get('recent_executions', [])
-    history_section = ""
-    if recent_executions:
-        history_section = "- ACTUAL RECENT EXECUTION LOG (Real results from previous searches):\n" + "\n".join([
-            f"  * Query: '{item.get('query')}' ({item.get('freshness')}) -> Found: {item.get('cards_found', 0)} cards | Qualified: {item.get('qualified_count', 0)} leads | Outcome: {item.get('outcome')}"
-            for item in recent_executions
-        ]) + "\n\n"
+    # Fresh Session: Do NOT load past session history or old failure logs into the active thinking prompt!
+    # The agent starts 100% clean every run, learning only dynamically within the current runtime session.
+    session_queries_summary = ""
 
     # Dynamic US Time Context (UTC-5 EST / UTC-8 PST)
     now_utc = datetime.utcnow()
@@ -56,8 +45,7 @@ def run_autonomous_agent(driver, niche, target_limit, exporter, memory, logger):
 
     us_time_guidance = (
         f"- CURRENT US TIME: ~{est_hour:02d}:00 EST / ~{pst_hour:02d}:00 PST ({'NIGHT/OFFLINE in USA' if is_us_night else 'ACTIVE US BUSINESS HOURS'}).\n"
-        f"  * Since active US founders are currently {'offline/asleep' if is_us_night else 'active'}, you SHOULD favor 'past-week' freshness to surface high-value posts from earlier in the week.\n"
-        f"  * Avoid 'past-24h' during US nighttime as global feeds will be dominated by Asian/European candidates.\n\n"
+        f"  * Use 'past-week' freshness to surface the highest-yield posts from active US founders across the business week.\n\n"
     )
 
     system_prompt = f"""You are an elite, fully autonomous Business Development Executive (BDE) AI Agent discovering prospective high-intent sales client leads on LinkedIn.
@@ -69,38 +57,31 @@ IDEAL CLIENTS (SALES-READY LEADS): Authentic direct decision-makers (Founders, C
 SESSION PERSISTENT CONTEXT & ISOLATED CSV:
 - Current Session CSV: {exporter.csv_path} (Mirrored to: {exporter.current_csv_path})
 - Current Session Leads Collected: {len(exporter.leads)} (Session starts fresh with 0 previous leads)
-{feedback_section}{history_section}{us_time_guidance}CRITICAL OPERATIONAL INSTRUCTIONS & USA HIGH-INTENT SALES STRATEGY:
+{us_time_guidance}CRITICAL OPERATIONAL INSTRUCTIONS & USA HIGH-INTENT SALES STRATEGY:
 1. STRICT COMMERCIAL BUYING INTENT FILTER:
    - A serious sales lead is NOT just anyone with "Founder" in their headline.
    - The candidate's post MUST express an active development need, MVP build, technical problem, or engineering hiring need.
    - REJECT immediately if the author is a recruiter, headhunter, career coach, or talent broker (e.g., "connecting professionals", "executive search", "staffing").
    - REJECT generic motivational posts, news links, or self-promotional thought leadership with no active engineering requirement.
 
-2. THE 3 MANDATORY USA LEAD MAGNETS:
+2. PROVEN HIGH-YIELD USA SEARCH PATTERNS (START FRESH):
    LinkedIn content search has NO native country filter. Generic phrases match globally and return 90%+ international candidates.
-   To guarantee high-yield USA leads, EVERY query you synthesize MUST incorporate at least one of these 3 US Lead Magnets:
-   a) US Tech Hub Anchoring:
-      Pair buyer intent with specific US metro hubs:
-      - "San Francisco" "founding engineer"
-      - "Austin" "building MVP" OR "founding engineer"
-      - "NYC" "first engineer" OR "dev shop"
-      - "Bay Area" "building MVP"
-      - "Seattle" "stealth AI"
-   b) US Startup Accelerators:
-      Anchor with top US accelerator batches (95%+ US presence):
-      - YC "founding engineer" hiring
-      - "Techstars" "founding engineer"
-      - "South Park Commons" hiring
-   c) US Buying & Building Signals:
-      - "looking for an agency" OR "dev shop" MVP
-      - "need help building" (MVP OR software OR app)
-      - "recommend a dev" OR "recommend an agency"
+   To guarantee high-yield USA leads, synthesize queries combining US Tech Hubs or US Accelerators with hiring/building intent (DO NOT USE QUOTES!):
+   - Austin founding engineer
+   - Seattle founding engineer
+   - NYC founding engineer
+   - San Francisco founding engineer
+   - Bay Area founding engineer
+   - YC founding engineer
+   - Techstars founding engineer
+   - South Park Commons founding engineer
+   - AI MVP founding engineer
 
-3. EXACT PHRASE QUOTING RULES:
-   - Enclose exact multi-word cities or compound titles in double quotes: "San Francisco", "Austin", "founding engineer", "first engineer", "US only".
-   - Do NOT quote single generic words like engineer or startup (leave unquoted for stem matching).
-   - NEVER wrap full sentences in quotes.
+3. STRICT SEARCH SYNTAX RULES (PREVENT ZERO RESULTS):
+   - NEVER use double quotes around keywords. Double quotes on LinkedIn enforce strict verbatim character matching which eliminates relevant variants (e.g. "founding engineer" misses "founding AI engineer", "founding full-stack engineer", "hiring our first engineer") and yields 0 results!
+   - NEVER put conversational sentences or clauses in quotes.
    - NEVER put "United States" or "USA" in the query box (it yields 0 results because real US founders don't write "USA").
+   - Keep queries natural, concise, and focused on tech hubs and founder hiring vernacular.
 
 4. COGNITIVE REASONING & STRATEGY TRANSPARENCY:
    - For EVERY execute_search call, you must explicitly articulate:
@@ -127,14 +108,22 @@ SESSION PERSISTENT CONTEXT & ISOLATED CSV:
 
     messages = [
         {"role": "system", "content": system_prompt},
-        {"role": "user", "content": f"Begin autonomous campaign. Current session CSV: '{exporter.csv_path}'. Goal: Discover genuine verified USA decision-maker leads for '{niche}'. Currently {starting_leads_count} leads in this session. Apply the 3 US Lead Magnets (US Tech Hubs, US Accelerators, or US hiring constraints), state your complete cognitive reasoning, and execute search."}
+        {"role": "user", "content": f"Begin autonomous campaign. Current session CSV: '{exporter.csv_path}'. Goal: Discover genuine verified USA decision-maker leads for '{niche}'. Currently {starting_leads_count} leads in this session. Start by executing an unquoted search query in a top US tech hub (such as 'Seattle founding engineer' or 'Austin founding engineer'), scan cards, verify USA location, ensure candidate is an authentic Founder/CTO with active building or 1099 contract engineering need, and qualify and save the lead."}
     ]
 
     is_finished = False
     turn = 0
-    max_turns = 40
+    max_turns = max(60, target_limit * 25)
+    start_time = time.time()
 
     while not is_finished and len(exporter.leads) < target_total_leads and turn < max_turns:
+        elapsed = time.time() - start_time
+        if max_duration_seconds and elapsed >= max_duration_seconds:
+            logger.info(f"Time limit of {max_duration_seconds/60:.1f} minutes reached. Stopping agent.")
+            print(f"\n{Style.YELLOW}{Style.BOLD}⏱️ TIME LIMIT REACHED: {max_duration_seconds/60:.1f} minutes elapsed. Wrapping up and saving collected leads...{Style.RESET}")
+            is_finished = True
+            break
+
         turn += 1
 
         # Self-healing message sanitization: Ensure every tool_call in assistant messages
@@ -312,28 +301,38 @@ SESSION PERSISTENT CONTEXT & ISOLATED CSV:
                     print(f"   {Style.GREEN}[ENTER / Y]{Style.RESET} Yes, search for the next genuine lead in this session (appends to same CSV)")
                     print(f"   {Style.RED}[N / Q]{Style.RESET} No, stop here and wrap up")
 
-                    try:
-                        user_resp = input(f"\n{Style.CYAN}Your choice (default: Y to continue): {Style.RESET}").strip().lower()
-                    except (EOFError, KeyboardInterrupt):
-                        user_resp = "n"
+                    is_non_interactive = os.environ.get("NON_INTERACTIVE", "0") == "1"
+                    if is_non_interactive:
+                        if len(exporter.leads) >= target_total_leads:
+                            is_finished = True
+                            user_resp = "n"
+                        else:
+                            user_resp = "y"
+                    else:
+                        try:
+                            user_resp = input(f"\n{Style.CYAN}Your choice (default: Y to continue): {Style.RESET}").strip().lower()
+                        except (EOFError, KeyboardInterrupt):
+                            user_resp = "n"
 
                     if user_resp in ["n", "no", "q", "quit", "exit"]:
                         is_finished = True
                     else:
-                        target_total_leads += 1  # User wants to find another genuine lead!
+                        target_total_leads = max(target_total_leads, len(exporter.leads) + 1)
+                        user_feedback = ""
                         
-                        # Interactive user feedback prompt to refine subsequent lead discovery
-                        print(f"\n{Style.YELLOW}{Style.BOLD}💬 DEVELOPER GUIDANCE & SPECIFIC PREFERENCES FOR NEXT SEARCH:{Style.RESET}")
-                        print(f"   {Style.DIM}(Share any feedback to guide the AI for the next lead, e.g.:{Style.RESET}")
-                        print(f"   {Style.DIM}  • 'Focus strictly on AI/ML or SaaS founders'{Style.RESET}")
-                        print(f"   {Style.DIM}  • 'Target Seed or Series A startups in California / NYC'{Style.RESET}")
-                        print(f"   {Style.DIM}  • 'Remove quotes from queries'{Style.RESET}")
-                        print(f"   {Style.DIM}  • Or press ENTER to continue with default high-intent founder criteria){Style.RESET}")
-                        
-                        try:
-                            user_feedback = input(f"   {Style.BOLD}Developer Guidance > {Style.RESET}").strip()
-                        except (EOFError, KeyboardInterrupt):
-                            user_feedback = ""
+                        if not is_non_interactive:
+                            # Interactive user feedback prompt to refine subsequent lead discovery
+                            print(f"\n{Style.YELLOW}{Style.BOLD}💬 DEVELOPER GUIDANCE & SPECIFIC PREFERENCES FOR NEXT SEARCH:{Style.RESET}")
+                            print(f"   {Style.DIM}(Share any feedback to guide the AI for the next lead, e.g.:{Style.RESET}")
+                            print(f"   {Style.DIM}  • 'Focus strictly on AI/ML or SaaS founders'{Style.RESET}")
+                            print(f"   {Style.DIM}  • 'Target Seed or Series A startups in California / NYC'{Style.RESET}")
+                            print(f"   {Style.DIM}  • 'Remove quotes from queries'{Style.RESET}")
+                            print(f"   {Style.DIM}  • Or press ENTER to continue with default high-intent founder criteria){Style.RESET}")
+                            
+                            try:
+                                user_feedback = input(f"   {Style.BOLD}Developer Guidance > {Style.RESET}").strip()
+                            except (EOFError, KeyboardInterrupt):
+                                user_feedback = ""
 
                         if user_feedback:
                             logger.info(f"User provided feedback after lead #{len(exporter.leads)} ({args.get('author')}): '{user_feedback}'")
@@ -397,10 +396,17 @@ SESSION PERSISTENT CONTEXT & ISOLATED CSV:
                 log_tool_result(result["observation"])
 
             elif fn_name == "finish_campaign":
-                summary = args.get("final_summary", "Campaign finished.")
-                is_finished = True
-                result = {"status": "campaign_completed", "summary": summary}
-                log_agent_thought(f"Campaign Finished: {summary}")
+                if len(exporter.leads) < target_total_leads:
+                    result = {
+                        "status": "target_not_reached",
+                        "observation": f"CANNOT FINISH: Target lead count not achieved yet ({len(exporter.leads)}/{target_total_leads} leads qualified). You must continue searching: formulate a new search query targeting another US tech hub (e.g. Austin founding engineer, Seattle founding engineer, NYC founding engineer, YC founding engineer) or scroll down to load more cards."
+                    }
+                    log_agent_thought(f"Campaign Finish rejected: Target lead count ({target_total_leads}) not achieved yet. Must continue searching.")
+                else:
+                    summary = args.get("final_summary", "Campaign finished.")
+                    is_finished = True
+                    result = {"status": "campaign_completed", "summary": summary}
+                    log_agent_thought(f"Campaign Finished: {summary}")
 
             else:
                 result = {"error": f"Unknown tool: {fn_name}"}

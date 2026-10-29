@@ -23,25 +23,9 @@ def clean_linkedin_boolean_query(query_str):
     if q.startswith('"') and q.endswith('"') and q.count('"') == 2:
         q = q[1:-1].strip()
 
-    # 4. Handle quoted segments: preserve 2-4 word key phrases, unquote single words or long sentences
-    def handle_quotes(match):
-        inner = match.group(1).strip()
-        words = inner.split()
-        if len(words) == 1:
-            # Single word: unquote for stem matching (e.g. "engineer" -> engineer matches engineers/engineering)
-            return inner
-        elif len(words) >= 2 and len(inner) <= 45:
-            # Multi-word key phrase anchor: keep exact quotes! (e.g. "San Francisco", "founding engineer", "US only")
-            return f'"{inner}"'
-        else:
-            # Full sentence: unquote to avoid 0 results
-            return inner
-
-    q = re.sub(r'\"([^\"]+)\"', handle_quotes, q)
-
-    # 5. Clean unbalanced quotes if any remain
-    if q.count('"') % 2 != 0:
-        q = q.replace('"', '')
+    # 4. Remove all double and single quotes to prevent 0-result exact character mismatches on LinkedIn
+    # LinkedIn post search operates with maximum recall and relevance when keywords are natural and unquoted.
+    q = q.replace('"', '').replace("'", '')
 
     # 6. Sanitize boolean operators
     for _ in range(3):
