@@ -40,21 +40,52 @@ class BDESalesIntelligenceSynthesizer:
         
         return ", ".join(found[:6]) if found else "Full-Stack Web & AI Architecture"
 
+    # UI chrome / timestamp fragments the DOM scanner leaves in post text
+    _NOISE_PATTERNS = [
+        r'\b(?:visit|view) (?:my|our) (?:website|profile|page)\b',
+        r'\b\d+\s*(?:s|m|min|h|hr|d|day|w|wk|mo|yr)s?\b(?=\s|$)',
+        r'\b(?:just now|yesterday)\b',
+        r'(?:…|\.\.\.)\s*(?:see\s+)?more\b',
+        r'\bsee (?:more|translation)\b',
+        r'\b(?:like|comment|repost|send|share|follow)\b(?=\s*(?:$|[|•]))',
+        r'\bhashtag\b',
+        r'#\w+',
+        r'https?://\S+',
+    ]
+
+    @classmethod
+    def clean_post_text(cls, text: str) -> str:
+        t = (text or "")
+        for pat in cls._NOISE_PATTERNS:
+            t = re.sub(pat, ' ', t, flags=re.IGNORECASE)
+        return re.sub(r'\s+', ' ', t).strip(" -•|·")
+
     @staticmethod
-    def extract_pain_point_summary(content: str, headline: str) -> str:
-        text = (content or "").strip()
+    def _truncate_words(s: str, limit: int) -> str:
+        if len(s) <= limit:
+            return s
+        return s[:limit].rsplit(' ', 1)[0].rstrip(',;:-') + "…"
+
+    @classmethod
+    def extract_pain_point_summary(cls, content: str, headline: str) -> str:
+        text = cls.clean_post_text(content)
         if not text:
             return "Active engineering and product development requirements."
             
         sentences = [s.strip() for s in re.split(r'[.!?\n]', text) if len(s.strip()) > 15]
         
-        # Look for the sentence containing hiring or building triggers
-        for s in sentences:
-            s_low = s.lower()
-            if any(k in s_low for k in ["hiring", "looking for", "need", "building", "seeking", "mvp", "v1"]):
-                return s[:120].strip() + ("..." if len(s) > 120 else "")
-                
-        return sentences[0][:120].strip() if sentences else "Accelerating software MVP engineering and founder-led product roadmap."
+        # Strongest need signals first so generic words ("building") don't win over "hiring ... MVP"
+        tiers = [
+            ["dev shop", "agency", "outsourc", "mvp", "v1", "hiring", "looking for", "seeking"],
+            ["need", "building", "build"],
+        ]
+        for triggers in tiers:
+            for s in sentences:
+                s_low = s.lower()
+                if any(k in s_low for k in triggers):
+                    return cls._truncate_words(s, 120)
+
+        return cls._truncate_words(sentences[0], 120) if sentences else "Accelerating software MVP engineering and founder-led product roadmap."
 
     @staticmethod
     def categorize_intent(content: str) -> str:
@@ -85,13 +116,14 @@ class BDESalesIntelligenceSynthesizer:
         tech_stack = cls.detect_tech_stack(post_content)
         pain_point = cls.extract_pain_point_summary(post_content, headline)
         intent_cat = cls.categorize_intent(post_content)
-        comp_display = company or "your startup"
+        comp_display = company if company and company.lower() != "startup" else "your startup"
 
         # ── 1. Personalized Connection Request Note (< 300 characters) ─────────
+        topic = cls._truncate_words(pain_point.rstrip("…. "), 70)
         note = (
-            f"Hi {first_name}, saw your note on {pain_point[:60]}... "
+            f"Hi {first_name}, your post on \"{topic}\" caught my eye. "
             f"We help US tech founders ship production-grade MVPs in weeks without US salary burn. "
-            f"Would love to connect and follow your build!"
+            f"Would love to connect!"
         )
         if len(note) > 295:
             note = (
@@ -104,7 +136,7 @@ class BDESalesIntelligenceSynthesizer:
         # ── 2. Full InMail / Cold Pitch Message ────────────────────────────────
         inmail_pitch = (
             f"Hi {first_name},\n\n"
-            f"I came across your recent LinkedIn update regarding {pain_point}. "
+            f"I came across your recent LinkedIn update regarding \"{pain_point.rstrip('…. ')}\". "
             f"Navigating technical hiring while trying to ship v1 at high velocity is often one of the biggest bottlenecks for US tech founders.\n\n"
             f"Our specialized engineering squad partners with early-stage US founders to provide battle-tested, senior developers ({tech_stack}). "
             f"We've helped 35+ venture-backed startups ship production-ready MVPs in under 6 weeks—delivering high-velocity sprint cadence without the $180k/yr US burn rate.\n\n"

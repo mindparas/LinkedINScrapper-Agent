@@ -49,26 +49,41 @@ class StrategicQueryPlanner:
         self.niche = niche
         self.executed_queries: List[Dict[str, Any]] = []
 
+    BUYER_INTENT_TERMS = [
+        "mvp", "dev shop", "software agency", "development partner", "fractional cto",
+        "technical co-founder", "technical cofounder", "outsourc", "need an engineer",
+        "need a developer", "build our app", "build my app", "hiring first engineer",
+    ]
+
     def get_proven_initial_queries(self) -> List[str]:
         """
-        Returns a curated sequence of top-performing natural unquoted queries.
+        Buyer-intent phrases first (what founders who need an agency actually write),
+        then hub-anchored hiring phrases.
         """
         return [
-            "San Francisco founding engineer",
-            "Austin founding engineer",
-            "Seattle founding engineer",
-            "NYC founding engineer",
-            "YC founding engineer",
-            "South Park Commons founding engineer",
-            "Bay Area founding engineer",
-            "Boston founding engineer",
-            "building MVP custom software",
-            "Denver founding engineer",
             "looking for dev shop",
-            "Los Angeles founding engineer",
-            "Techstars founding engineer",
-            "hiring first engineer startup"
+            "need software agency",
+            "building MVP custom software",
+            "fractional CTO needed",
+            "looking for technical co-founder",
+            "outsourcing development MVP",
+            "San Francisco building our MVP",
+            "Austin looking for dev shop",
+            "NYC building our MVP",
+            "Seattle need software agency",
+            "YC building our MVP",
+            "hiring first engineer startup",
+            "Boston building our MVP",
+            "Denver looking for dev shop",
+            "Los Angeles building our MVP",
+            "Techstars building our MVP",
         ]
+
+    def is_acceptable_query(self, query: str) -> bool:
+        """A query must carry a US anchor (hub/accelerator) or a buyer-intent phrase; bare job-title queries are recruiter bait."""
+        q = (query or "").lower()
+        anchors = [h.lower() for h in self.HIGH_YIELD_US_TECH_HUBS + self.TOP_US_ACCELERATORS]
+        return any(a in q for a in anchors) or any(t in q for t in self.BUYER_INTENT_TERMS)
 
     def record_query_execution(self, query: str, freshness: str, cards_found: int, qualified_count: int):
         self.executed_queries.append({
@@ -88,12 +103,12 @@ class StrategicQueryPlanner:
                 
         # Generate dynamic combinations if base list exhausted
         for hub in self.HIGH_YIELD_US_TECH_HUBS:
-            for angle in ["hiring founding engineer", "building MVP", "seeking engineer"]:
+            for angle in ["building our MVP", "looking for dev shop", "need software agency"]:
                 candidate = f"{hub} {angle}"
                 if candidate.lower().strip() not in executed_set:
                     return candidate
 
-        return "San Francisco founding engineer"
+        return "looking for dev shop"
 
     def diagnose_feed_outcome(self, cards_count: int, consecutive_empty_scrolls: int, consecutive_non_usa: int) -> Dict[str, Any]:
         """
@@ -103,14 +118,14 @@ class StrategicQueryPlanner:
             return {
                 "action": "switch_query_or_freshness",
                 "diagnosis": "0 cards found on LinkedIn. The query syntax may be too restrictive or has no matches in this timeframe.",
-                "recommendation": "Switch freshness from past-24h to past-week, or switch to a high-yield US Tech Hub (e.g. 'Austin founding engineer')."
+                "recommendation": "Switch freshness from past-24h to past-week, or switch to a high-yield US Tech Hub (e.g. 'Austin looking for dev shop')."
             }
             
         if consecutive_non_usa >= 2:
             return {
                 "action": "bailout_feed",
                 "diagnosis": f"Feed contaminated with {consecutive_non_usa} consecutive international non-US profiles.",
-                "recommendation": "Stop scrolling this feed immediately. Execute a search anchored strictly to a US city (e.g., 'Seattle founding engineer')."
+                "recommendation": "Stop scrolling this feed immediately. Execute a search anchored strictly to a US city (e.g., 'Seattle need software agency')."
             }
             
         if consecutive_empty_scrolls >= 2:

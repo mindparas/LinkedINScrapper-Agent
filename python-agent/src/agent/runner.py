@@ -2,7 +2,8 @@ import os
 import time
 import json
 import urllib.request
-from datetime import datetime
+from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 
 from src.config import (
     Style,
@@ -30,15 +31,15 @@ def run_autonomous_agent(driver, niche, target_limit, exporter, memory, logger, 
         active_developer_directives=active_developer_directives
     )
 
-    # Dynamic US Time Context (UTC-5 EST / UTC-8 PST)
-    now_utc = datetime.utcnow()
-    est_hour = (now_utc.hour - 5) % 24
-    pst_hour = (now_utc.hour - 8) % 24
+    # Dynamic US Time Context (DST-aware)
+    now_utc = datetime.now(timezone.utc)
+    est_hour = now_utc.astimezone(ZoneInfo("America/New_York")).hour
+    pst_hour = now_utc.astimezone(ZoneInfo("America/Los_Angeles")).hour
     is_us_night = (est_hour < 8 or est_hour >= 23)
 
     us_time_guidance = (
         f"- CURRENT US TIME: ~{est_hour:02d}:00 EST / ~{pst_hour:02d}:00 PST ({'NIGHT/OFFLINE in USA' if is_us_night else 'ACTIVE US BUSINESS HOURS'}).\n"
-        f"  * During non-business hours, favor 'past-week' freshness to surface the highest-yield posts from active US founders across the business week.\n\n"
+        f"  * Start with 'past-24h'; the tool falls back to 'past-week' automatically when a query has no fresh results.\n\n"
     )
 
     system_prompt = f"""You are an elite, fully autonomous Business Development Executive (BDE) AI Agent discovering prospective high-intent sales client leads on LinkedIn.
@@ -58,19 +59,13 @@ SESSION PERSISTENT CONTEXT & ISOLATED CSV:
    - REJECT generic motivational posts, news links, or self-promotional thought leadership with no active engineering requirement.
    - REJECT if the hiring or role is already marked as filled, closed, or celebrated as completed.
 
-2. PROVEN HIGH-YIELD USA SEARCH PATTERNS:
-   LinkedIn content search has NO native country filter. Generic phrases match globally and return 90%+ international candidates.
-   To guarantee high-yield USA leads, synthesize natural unquoted queries combining US Tech Hubs or US Accelerators with hiring/building intent:
-   - San Francisco founding engineer
-   - Austin founding engineer
-   - Seattle founding engineer
-   - NYC founding engineer
-   - YC founding engineer
-   - South Park Commons founding engineer
-   - Bay Area founding engineer
-   - Boston founding engineer
-   - building MVP custom software
-   - Denver founding engineer
+2. PROVEN HIGH-YIELD SEARCH PATTERNS:
+   LinkedIn content search has NO native country filter. Job-title phrases like "founding engineer" are dominated by recruiters and job seekers.
+   Prefer BUYER-INTENT phrases (what founders who need an agency actually write), optionally anchored to a US hub/accelerator:
+   - looking for dev shop / need software agency / building MVP custom software
+   - fractional CTO needed / looking for technical co-founder / outsourcing development MVP
+   - San Francisco building our MVP / Austin looking for dev shop / NYC building our MVP / YC building our MVP
+   Queries with neither a US anchor nor a buyer-intent phrase are rejected by the tool; repeated queries are rejected too.
 
 3. STRICT SEARCH SYNTAX RULES (PREVENT ZERO RESULTS):
    - NEVER use unnecessary double quotes around keywords. Double quotes on LinkedIn enforce strict verbatim character matching which eliminates relevant variants and yields 0 results!
@@ -84,6 +79,10 @@ SESSION PERSISTENT CONTEXT & ISOLATED CSV:
      * query_rationale: Strategic reason why these specific keywords were selected for '{niche}'.
      * feasibility_analysis: Will this query achieve the objective, what posts will it attract, and why will it avoid noise and recruiters?
      * developer_feedback_alignment: Explicitly how this query strictly obeys and incorporates all guidance.
+
+4b. CODE-LEVEL PRE-FILTERING:
+   - The tools auto-reject obvious recruiters/brokers, cards with no title and no intent, and non-US profiles, and auto-scroll for more cards. Those are never shown to you; do not re-evaluate them.
+   - Cards that carry verified_location/is_usa_verified were already profile-checked. Skip a card only with a SPECIFIC reason citing evidence (headline text, post excerpt, location).
 
 5. EARLY FEED BAILOUT & RECOVERY:
    - If 2 consecutive cards in a search result fail USA qualification or belong to recruiters/freelancers, STOP scrolling that feed immediately! Formulate an improved query autonomously targeting a different US tech hub or accelerator.
@@ -106,6 +105,8 @@ SESSION PERSISTENT CONTEXT & ISOLATED CSV:
 
     is_finished = False
     turn = 0
+    if max_duration_seconds:
+        tools_engine.deadline = time.time() + max_duration_seconds
     max_turns = max(80, target_limit * 30)
     start_time = time.time()
 
@@ -226,7 +227,7 @@ SESSION PERSISTENT CONTEXT & ISOLATED CSV:
             # ── Dispatch Tool Actions ────────────────────────────
             if fn_name == "execute_search":
                 q = args.get("query", initial_query)
-                fresh = args.get("freshness", "past-week")
+                fresh = args.get("freshness", "past-24h")
                 t_obj = args.get("target_objective", "")
                 q_rat = args.get("query_rationale", args.get("rationale", ""))
                 feas = args.get("feasibility_analysis", "")

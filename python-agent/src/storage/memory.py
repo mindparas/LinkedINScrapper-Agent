@@ -1,6 +1,6 @@
 import os
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 from src.config import BASE_DIR
 
 class AgentMemory:
@@ -19,6 +19,7 @@ class AgentMemory:
             "execution_history": [],
             "user_feedback_history": [],
             "qualified_leads": [],
+            "skipped_fingerprints": {},
             "last_updated": datetime.now().isoformat()
         }
         self.load()
@@ -38,6 +39,7 @@ class AgentMemory:
                         loaded.pop("learned_rules", None)
                         loaded.pop("previously_qualified_leads", None)
                         self.data.update(loaded)
+                        self._normalize_skipped()
             except Exception:
                 pass
 
@@ -108,6 +110,56 @@ class AgentMemory:
             "location": lead_dict.get("Verified Location"),
             "fit_score": lead_dict.get("Fit Score")
         })
+        self.save()
+
+    MAX_SKIPPED_FINGERPRINTS = 3000
+    SKIP_TTL_DAYS = 14
+
+    def _normalize_skipped(self):
+        """Migrate the legacy list format to {key: iso_timestamp} and drop entries older than the TTL."""
+        raw = self.data.get("skipped_fingerprints")
+        now = datetime.now()
+        if isinstance(raw, list):
+            raw = {k: now.isoformat() for k in raw if isinstance(k, str)}
+        elif not isinstance(raw, dict):
+            raw = {}
+        cutoff = now - timedelta(days=self.SKIP_TTL_DAYS)
+        kept = {}
+        for k, ts in raw.items():
+            try:
+                if datetime.fromisoformat(ts) >= cutoff:
+                    kept[k] = ts
+            except (TypeError, ValueError):
+                kept[k] = now.isoformat()
+        self.data["skipped_fingerprints"] = kept
+
+    def is_skipped(self, key: str) -> bool:
+        key = (key or "").strip().lower()
+        if not key:
+            return False
+        ts = self.data.get("skipped_fingerprints", {}).get(key)
+        if not ts:
+            return False
+        try:
+            return datetime.fromisoformat(ts) >= datetime.now() - timedelta(days=self.SKIP_TTL_DAYS)
+        except (TypeError, ValueError):
+            return True
+
+    def record_skips(self, keys):
+        """Persist author/profile fingerprints of rejected cards; they expire after SKIP_TTL_DAYS."""
+        now = datetime.now().isoformat()
+        store = self.data.setdefault("skipped_fingerprints", {})
+        changed = False
+        for k in keys:
+            k = (k or "").strip().lower()
+            if k:
+                store[k] = now
+                changed = True
+        if not changed:
+            return
+        if len(store) > self.MAX_SKIPPED_FINGERPRINTS:
+            for k in sorted(store, key=store.get)[:len(store) - self.MAX_SKIPPED_FINGERPRINTS]:
+                del store[k]
         self.save()
 
     def get_memory_summary(self):

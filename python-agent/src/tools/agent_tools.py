@@ -63,6 +63,31 @@ class LinkedInAgentTools:
         self.last_dom_card_count = 0
         self.last_scanned_cards = []
         self.executed_queries = set()
+        self.deadline = None  # epoch seconds; long loops stop early when exceeded
+        self.auto_skipped_count = 0
+        self.profile_visits = 0
+
+    MAX_AUTO_SCROLLS = 3
+    MAX_AUTO_VERIFY = 3
+
+    @staticmethod
+    def _norm_url(url):
+        return (url or "").strip().lower().split('?')[0].rstrip('/')
+
+    @staticmethod
+    def _excerpt(text, limit=400):
+        t = " ".join((text or "").split())
+        return f"post='{t[:limit]}{'…' if len(t) > limit else ''}'"
+
+    def _time_up(self):
+        return self.deadline is not None and time.time() >= self.deadline
+
+    def _register_skip(self, author, profile_url):
+        keys = [(author or "").strip().lower(), self._norm_url(profile_url)]
+        for k in keys:
+            if k:
+                self.evaluated_fingerprints.add(k)
+        self.memory.record_skips(keys)
 
     def get_next_recommended_query(self):
         return self.planner.get_next_recommended_query(self.executed_queries)
@@ -89,6 +114,23 @@ class LinkedInAgentTools:
         query_rationale = query_rationale or rationale
         target_objective = target_objective or expected_output
 
+        clean_q = clean_linkedin_boolean_query(query)
+        if clean_q.lower() in self.executed_queries:
+            next_rec = self.get_next_recommended_query()
+            return {
+                "status": "query_rejected",
+                "observation": f"Query '{clean_q}' was already executed in this session. Run a different one, e.g. '{next_rec}'."
+            }
+        if not self.planner.is_acceptable_query(clean_q):
+            next_rec = self.get_next_recommended_query()
+            return {
+                "status": "query_rejected",
+                "observation": (
+                    f"Query '{clean_q}' has no US anchor (tech hub/accelerator) and no buyer-intent phrase, so it returns recruiters and job seekers. "
+                    f"Use a buyer-intent query such as '{next_rec}'."
+                )
+            }
+
         # Wrap up previous query stats in memory if exists
         if self.current_query:
             self.memory.record_query(
@@ -113,7 +155,6 @@ class LinkedInAgentTools:
         self.consecutive_empty_scrolls = 0
         self.consecutive_zero_card_scans = 0
         self.last_dom_card_count = 0
-        clean_q = clean_linkedin_boolean_query(query)
         self.current_query = clean_q
         self.executed_queries.add(clean_q.lower())
         self.current_freshness = freshness if freshness in ["past-24h", "past-week"] else "past-24h"
@@ -157,22 +198,12 @@ class LinkedInAgentTools:
                 )
             }
 
-        encoded = urllib.parse.quote(clean_q)
-        date_param = "%22past-24h%22" if self.current_freshness == "past-24h" else "%22past-week%22"
-        url = f"https://www.linkedin.com/search/results/content/?datePosted={date_param}&keywords={encoded}&origin=GLOBAL_SEARCH_HEADER&sortBy=%5B%22date_posted%22%5D"
-
         self.logger.info(f"Agent executing search: '{clean_q}' | Freshness: {self.current_freshness} | Objective: {target_objective} | Rationale: {query_rationale}")
-        self.driver.get(url)
-        time.sleep(random.uniform(3.5, 4.5))
-
-        body_text = self.driver.find_element(By.TAG_NAME, "body").text
-        has_no_results = (
-            "No results found" in body_text or
-            "Try removing filters or rephrasing your search" in body_text
-        )
-
-        comment_btns = self.driver.find_elements(By.CSS_SELECTOR, "button[aria-label*='Comment' i], button[aria-label*='comment']")
-        visible_cards = len(comment_btns)
+        has_no_results, visible_cards = self._load_search(clean_q, self.current_freshness)
+        if (has_no_results or visible_cards == 0) and self.current_freshness == "past-24h":
+            self.logger.info("No results for past-24h; falling back to past-week.")
+            self.current_freshness = "past-week"
+            has_no_results, visible_cards = self._load_search(clean_q, self.current_freshness)
         self.cards_on_current_query = visible_cards
         self.last_dom_card_count = visible_cards
 
@@ -197,63 +228,125 @@ class LinkedInAgentTools:
             "observation": obs
         }
 
-    def scan_and_read_cards(self):
+    def _load_search(self, clean_q, freshness):
+        encoded = urllib.parse.quote(clean_q)
+        date_param = "%22past-24h%22" if freshness == "past-24h" else "%22past-week%22"
+        url = f"https://www.linkedin.com/search/results/content/?datePosted={date_param}&keywords={encoded}&origin=GLOBAL_SEARCH_HEADER&sortBy=%5B%22date_posted%22%5D"
+        self.driver.get(url)
+        time.sleep(random.uniform(3.5, 4.5))
+
+        body_text = self.driver.find_element(By.TAG_NAME, "body").text
+        has_no_results = (
+            "No results found" in body_text or
+            "Try removing filters or rephrasing your search" in body_text
+        )
+        comment_btns = self.driver.find_elements(By.CSS_SELECTOR, "button[aria-label*='Comment' i], button[aria-label*='comment']")
+        return has_no_results, len(comment_btns)
+
+    def _collect_new_cards(self):
+        """One DOM pass: dedupe against evaluated/skipped/qualified, annotate, and auto-skip clear rejects."""
         cards = scan_linkedin_content_cards(self.driver, self.logger)
+        qualified_urls = {self._norm_url(ex.get("Profile URL")) for ex in self.exporter.leads}
+        fresh, auto_skipped = [], 0
 
-        unevaluated_cards = []
         for c in cards:
-            fp = (c.get("author", "") + "_" + c.get("content", "")[:35]).lower()
             auth_low = c.get("author", "").strip().lower()
-            url_clean = c.get("author_url", "").strip().lower().split('?')[0].rstrip('/')
-
-            # Exclude profiles or authors already evaluated or qualified in THIS session
-            if any((ex.get("Profile URL") or "").strip().lower().split('?')[0].rstrip('/') == url_clean for ex in self.exporter.leads):
-                continue
-            if auth_low in self.evaluated_fingerprints or url_clean in self.evaluated_fingerprints:
-                continue
-
+            url_clean = self._norm_url(c.get("author_url", ""))
             content = c.get("content", "")
-            if fp not in self.evaluated_fingerprints and len(content) > 15:
-                c["parsed_age_days"] = round(parse_post_age(c.get("raw_timestamp", "")), 2)
-                is_auth, auth_hint = verify_bde_lead_authenticity(c.get("author", ""), c.get("headline", ""), "", c.get("company", ""), content)
-                has_intent, intent_hint = verify_sales_buying_intent(content, c.get("headline", ""))
-                
-                c["bde_authenticity_check"] = "PASS: Direct Founder/Exec" if is_auth else f"FLAGGED: {auth_hint}"
-                c["sales_intent_check"] = f"HIGH INTENT: {intent_hint}" if has_intent else f"LOW/NO INTENT: {intent_hint}"
-                c["buying_intent_signal"] = intent_hint if has_intent else "No commercial technical buying intent"
-                
-                # Assign stable card_index based on position in this scan
-                c["card_index"] = len(unevaluated_cards)
-                unevaluated_cards.append(c)
 
-        self.last_scanned_cards = unevaluated_cards
+            if url_clean in qualified_urls:
+                continue
+            if any(k and (k in self.evaluated_fingerprints or self.memory.is_skipped(k)) for k in (auth_low, url_clean)):
+                continue
+            if len(content) <= 15:
+                continue
+
+            c["parsed_age_days"] = round(parse_post_age(c.get("raw_timestamp", "")), 2)
+            is_auth, auth_hint = verify_bde_lead_authenticity(c.get("author", ""), c.get("headline", ""), "", c.get("company", ""), content)
+            has_intent, intent_hint = verify_sales_buying_intent(content, c.get("headline", ""))
+
+            # Deterministic pre-filter: obvious recruiters/brokers, or no title AND no intent, never reach the LLM
+            is_broker = (not is_auth) and "disqualified persona pattern" in auth_hint
+            if is_broker or (not is_auth and not has_intent):
+                reason = auth_hint if is_broker else f"{auth_hint}; {intent_hint}"
+                self._register_skip(c.get("author", ""), c.get("author_url", ""))
+                self.skipped_count += 1
+                auto_skipped += 1
+                log_skipped(f"Auto-skip ({c.get('author', 'Unknown')}) — {reason}")
+                self.logger.info(f"SKIPPED POST TEXT [auto] {c.get('author', 'Unknown')} | headline='{c.get('headline', '')[:100]}' | {self._excerpt(content)}")
+                continue
+
+            c["bde_authenticity_check"] = "PASS: Direct Founder/Exec" if is_auth else f"FLAGGED: {auth_hint}"
+            c["sales_intent_check"] = f"HIGH INTENT: {intent_hint}" if has_intent else f"LOW/NO INTENT: {intent_hint}"
+            c["buying_intent_signal"] = intent_hint if has_intent else "No commercial technical buying intent"
+            c["_passes_gates"] = bool(is_auth and has_intent)
+            fresh.append(c)
+
+        self.auto_skipped_count += auto_skipped
+        return fresh, auto_skipped
+
+    def scan_and_read_cards(self):
+        unevaluated_cards, auto_skipped = self._collect_new_cards()
+
+        # Scroll for more cards before declaring the feed dry
+        scrolls = 0
+        while not unevaluated_cards and scrolls < self.MAX_AUTO_SCROLLS and not self._time_up():
+            scroll_res = self.scroll_feed(steps=1, rationale="auto-scroll: no new candidates in view")
+            scrolls += 1
+            more, skipped_more = self._collect_new_cards()
+            auto_skipped += skipped_more
+            unevaluated_cards.extend(more)
+            if scroll_res.get("at_end_of_feed") or self.consecutive_non_usa_count >= 2:
+                break
+
+        # Auto-verify location (profile visit) for cards that pass both gates
+        verified_notes = []
+        kept = []
+        visits = 0
+        for c in unevaluated_cards:
+            if c.pop("_passes_gates", False) and visits < self.MAX_AUTO_VERIFY and not self._time_up():
+                visits += 1
+                res = self.verify_profile_location(author_url=c.get("author_url", ""))
+                c["verified_location"] = res.get("exact_location", "Unknown")
+                c["is_usa_verified"] = bool(res.get("is_usa_verified"))
+                if not c["is_usa_verified"] and res.get("exact_location") not in ("Error inspecting profile", "Unknown"):
+                    self._register_skip(c.get("author", ""), c.get("author_url", ""))
+                    self.skipped_count += 1
+                    auto_skipped += 1
+                    verified_notes.append(f"{c.get('author')} auto-rejected: non-US ({c['verified_location']})")
+                    continue
+                verified_notes.append(f"{c.get('author')}: {c['verified_location']} (US={c['is_usa_verified']})")
+            kept.append(c)
+
+        for idx, c in enumerate(kept):
+            c["card_index"] = idx
+        self.last_scanned_cards = kept
+        unevaluated_cards = kept
 
         if len(unevaluated_cards) == 0:
             self.consecutive_zero_card_scans += 1
-            if self.consecutive_zero_card_scans >= 2 or self.consecutive_empty_scrolls >= 1:
-                next_q = self.get_next_recommended_query()
-                obs = (
-                    f"Extracted 0 new post cards from the DOM (all visible cards have already been evaluated or qualified). "
-                    f"🛑 FEED EXHAUSTED for query '{self.current_query}'. STOP scrolling on this feed. "
-                    f"Recommended next proven US query: '{next_q}'. Execute search with this query now."
-                )
-            else:
-                obs = "Extracted 0 new post cards from the DOM (all visible cards were already evaluated). You may scroll once (steps=1) to attempt loading more cards, or execute a new search query."
-            return {
-                "cards_found_count": 0,
-                "cards": [],
-                "observation": obs
-            }
-        else:
-            self.consecutive_zero_card_scans = 0
+            diag = self.planner.diagnose_feed_outcome(
+                self.last_dom_card_count, self.consecutive_empty_scrolls, self.consecutive_non_usa_count
+            )
+            next_q = self.get_next_recommended_query()
+            obs = (
+                f"No new candidate cards after auto-scrolling {scrolls}x ({auto_skipped} auto-rejected as recruiters/no-intent/non-US). "
+                f"🛑 FEED EXHAUSTED for query '{self.current_query}'"
+                + (f" ({diag['diagnosis']})" if diag["action"] != "continue_feed" else "") + ". "
+                f"Recommended next query: '{next_q}'. Execute search with this query now."
+            )
+            return {"cards_found_count": 0, "cards": [], "auto_skipped": auto_skipped, "observation": obs}
 
+        self.consecutive_zero_card_scans = 0
         return {
             "cards_found_count": len(unevaluated_cards),
             "cards": unevaluated_cards,
+            "auto_skipped": auto_skipped,
             "observation": (
-                f"Extracted {len(unevaluated_cards)} new post cards from the DOM. Read them carefully. "
-                f"If a candidate looks like an authentic decision-maker with active buying intent, call verify_profile_location "
-                f"to check their exact US location, then call qualify_and_save_lead."
+                f"{len(unevaluated_cards)} candidate cards ({auto_skipped} more auto-rejected by code as recruiters/no-intent/non-US; do NOT re-evaluate those). "
+                + (f"Profile checks done: {'; '.join(verified_notes)}. " if verified_notes else "")
+                + "Cards with verified_location and is_usa_verified=true that show HIGH INTENT can go straight to qualify_and_save_lead; "
+                  "call verify_profile_location only for unverified cards you consider promising."
             )
         }
 
@@ -272,6 +365,7 @@ class LinkedInAgentTools:
 
         self.logger.info(f"Opening author profile in background tab to verify exact location: {author_url}")
         original_tab = self.driver.current_window_handle
+        self.profile_visits += 1
 
         try:
             # Open profile in new background tab
@@ -536,28 +630,79 @@ class LinkedInAgentTools:
             "observation": f"Successfully qualified and saved lead #{total_leads} ({author}). Specific post URL captured: {post_url}."
         }
 
+    GENERIC_SKIP_REASONS = ("not an authentic tech decision maker", "disqualified")
+
     def skip_card(self, card_index: int, author: str, rejection_reason: str):
         self.skipped_count += 1
-        self.evaluated_fingerprints.add((author + "_" + rejection_reason[:25]).lower())
+        author_url = ""
+        if 0 <= card_index < len(self.last_scanned_cards) and self.last_scanned_cards[card_index].get("author") == author:
+            author_url = self.last_scanned_cards[card_index].get("author_url", "")
+        else:
+            for c in self.last_scanned_cards:
+                if c.get("author") == author:
+                    author_url = c.get("author_url", "")
+                    break
+        self._register_skip(author, author_url)
+        for c in self.last_scanned_cards:
+            if c.get("author") == author:
+                self.logger.info(
+                    f"SKIPPED POST TEXT [llm] {author} | headline='{c.get('headline', '')[:100]}' | intent_check={c.get('sales_intent_check', '')[:120]} | {self._excerpt(c.get('content', ''))}"
+                )
+                break
         log_skipped(f"Card #{card_index} ({author}) — Reason: {rejection_reason}")
+
+        reason = rejection_reason.strip().rstrip(".")
+        obs = f"Skipped card #{card_index} ({author}). Reason: {reason}."
+        if len(reason) < 20 or reason.lower().startswith(self.GENERIC_SKIP_REASONS):
+            obs += " Reason too generic: next time cite the concrete evidence (headline text, post excerpt, location)."
         return {
             "status": "card_skipped",
             "author": author,
             "reason": rejection_reason,
-            "observation": f"Skipped card #{card_index} ({author}). Reason: {rejection_reason}."
+            "observation": obs
         }
+
+    # LinkedIn's search page often scrolls an inner container, so window.scrollBy does nothing.
+    # Click a "show more" button if one exists, else bring the last card into view and
+    # push every scrollable ancestor (and the window) to the bottom to fire the lazy loader.
+    LAZY_LOAD_SCRIPT = """
+        const more = Array.from(document.querySelectorAll('button')).find(b =>
+            /show more results|see more results|load more/i.test((b.innerText || '') + ' ' + (b.getAttribute('aria-label') || '')));
+        if (more) { more.click(); return 'clicked_more'; }
+        const items = document.querySelectorAll('[data-bde-card-id], div[role="listitem"]');
+        let last = items.length ? items[items.length - 1] : null;
+        if (!last) {
+            const btns = document.querySelectorAll("button[aria-label*='Comment' i]");
+            last = btns.length ? btns[btns.length - 1] : null;
+        }
+        if (last) {
+            last.scrollIntoView({block: 'end', behavior: 'instant'});
+            let el = last.parentElement;
+            while (el) {
+                if (el.scrollHeight > el.clientHeight + 50 && /(auto|scroll)/.test(getComputedStyle(el).overflowY)) {
+                    el.scrollTop = el.scrollHeight;
+                }
+                el = el.parentElement;
+            }
+        }
+        window.scrollTo(0, document.body.scrollHeight);
+        return 'scrolled';
+    """
 
     def scroll_feed(self, steps: int = 1, rationale: str = ""):
         self.scroll_count_on_query += steps
         self.logger.info(f"Agent scrolling down feed: {steps} steps | Rationale: {rationale}")
 
         for _ in range(steps):
-            scroll_pixels = random.randint(650, 950)
-            self.driver.execute_script(f"window.scrollBy({{ top: {scroll_pixels}, behavior: 'smooth' }});")
-            time.sleep(random.uniform(2.0, 3.0))
-            if random.random() < 0.25:
-                self.driver.execute_script("window.scrollBy({ top: -120, behavior: 'smooth' });")
+            before = len(self.driver.find_elements(By.CSS_SELECTOR, "button[aria-label*='Comment' i]"))
+            self.driver.execute_script(self.LAZY_LOAD_SCRIPT)
+            # Poll up to ~6s for LinkedIn to append new cards after the trigger
+            for _ in range(12):
                 time.sleep(0.5)
+                now = len(self.driver.find_elements(By.CSS_SELECTOR, "button[aria-label*='Comment' i]"))
+                if now > before:
+                    break
+            time.sleep(random.uniform(0.8, 1.5))
 
         comment_btns = self.driver.find_elements(By.CSS_SELECTOR, "button[aria-label*='Comment' i], button[aria-label*='comment']")
         total_cards = len(comment_btns)

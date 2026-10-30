@@ -14,12 +14,12 @@ AGENT_TOOLS = [
                 "properties": {
                     "query": {
                         "type": "string",
-                        "description": "High-intent search query. MUST incorporate at least one US Lead Magnet: 1) US Tech Hub (e.g. '\"San Francisco\" \"founding engineer\"', '\"Austin\" \"founding engineer\"', '\"NYC\" \"first engineer\"'), 2) US Accelerators (e.g. 'YC \"founding engineer\" hiring', '\"Techstars\" \"founding engineer\"'), or 3) US Hiring constraints ('\"US only\" \"founding engineer\"'). Use double quotes around exact multi-word cities or compound titles. NEVER put generic 'United States' or 'USA' in the query box as that yields 0 founder posts."
+                        "description": "Unquoted natural search query. MUST contain a buyer-intent phrase (e.g. 'looking for dev shop', 'need software agency', 'building our MVP', 'fractional CTO needed', 'looking for technical co-founder') and/or a US tech hub or accelerator ('Austin looking for dev shop', 'YC building our MVP'). Bare job-title queries like 'founding engineer' and repeated queries are rejected. NEVER put 'United States' or 'USA' in the query."
                     },
                     "freshness": {
                         "type": "string",
                         "enum": ["past-24h", "past-week"],
-                        "description": "Freshness window ('past-24h' or 'past-week'). Favor 'past-week' when running during non-US business hours to capture active US founder posts from the week."
+                        "description": "Freshness window ('past-24h' or 'past-week'). Start with 'past-24h'; the tool automatically falls back to 'past-week' if there are no fresh results."
                     },
                     "target_objective": {
                         "type": "string",
@@ -120,7 +120,7 @@ AGENT_TOOLS = [
         "type": "function",
         "function": {
             "name": "skip_card",
-            "description": "Disqualify an unqualified post card with an explicit rejection reason (e.g. Recruiter, Non-US location leak, Stale post, Job seeker).",
+            "description": "Disqualify a post card. The rejection reason must be specific and cite evidence (e.g. headline 'Technical Recruiter at X', post says role filled, profile location Bangalore); generic reasons are flagged.",
             "parameters": {
                 "type": "object",
                 "properties": {

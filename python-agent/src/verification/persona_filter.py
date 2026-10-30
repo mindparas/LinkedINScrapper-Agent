@@ -76,7 +76,17 @@ GENUINE_EXECUTIVE_TITLES = [
     r'\bfractional cto\b',
     r'\btechnical advisor\b',
     r'\bmanaging director\b',
-    r'\bowner\b'
+    r'\bowner\b',
+    r'\bpresident\b',
+    r'\bchief\b',
+    r'\bvice president\b',
+    r'\bvp\b',
+    r'\bhead of (?:technology|engineering|product|ai|data)\b',
+    r'\bdirector of (?:engineering|technology|product)\b',
+    r'\bfounding (?:team|member|partner)\b',
+    r'\bentrepreneur\b',
+    r'\bbuilder (?:@|at\b)',
+    r'\bbuilding (?:@|at\b)',
 ]
 
 def verify_bde_persona(author: str, headline: str, role: str = "", company: str = "") -> Tuple[bool, str]:
