@@ -76,19 +76,26 @@ def print_leads_summary_table(leads):
     print(f"{Style.GREEN}{Style.BOLD}🎉 CAMPAIGN COMPLETED: DISCOVERED {len(leads)} VERIFIED USA CLIENT LEADS{Style.RESET}")
     print("=" * 80)
     for idx, lead in enumerate(leads, 1):
-        author = lead.get("Author") or lead.get("author") or "Unknown"
-        role = lead.get("Role") or lead.get("role") or "Founder"
-        company = lead.get("Company") or lead.get("company") or "Startup"
-        loc = lead.get("Location") or lead.get("location") or "USA"
-        score = lead.get("Fit Score") or lead.get("fit_score") or "N/A"
-        post_url = lead.get("Post URL") or lead.get("post_url") or "N/A"
-        profile_url = lead.get("Profile URL") or lead.get("profile_url") or "N/A"
-        intent = lead.get("Buying Intent Signal") or lead.get("buying_intent_signal") or ""
+        author = lead.get("Author Name") or lead.get("Author") or "Unknown"
+        role = lead.get("Title / Headline") or lead.get("Role") or "Founder"
+        company = lead.get("Company Name") or lead.get("Company") or "Startup"
+        loc = lead.get("Verified Location") or lead.get("Location") or "USA"
+        score = lead.get("Fit Score") or "N/A"
+        post_url = lead.get("Post URL") or "N/A"
+        profile_url = lead.get("Profile URL") or "N/A"
+        intent = lead.get("Commercial Intent Category") or lead.get("Buying Intent Signal") or ""
+        conn_note = lead.get("LinkedIn Connection Note (<300 chars)") or lead.get("Custom Outreach Hook") or ""
+        tech = lead.get("Target Tech Stack") or ""
 
-        print(f" {Style.BOLD}[#{idx}] {author}{Style.RESET} — {role} @ {company} ({Style.GREEN}{loc}{Style.RESET})")
+        print(f" {Style.BOLD}[#{idx}] {author}{Style.RESET} — {role}")
+        print(f"      🏢 Company: {company} | 📍 Location: {Style.GREEN}{loc}{Style.RESET}")
         print(f"      ⭐ Fit Score: {score}/100 | 🔥 Intent: {intent}")
+        if tech:
+            print(f"      💻 Tech Stack: {tech}")
         print(f"      📌 Authentic Post URL: {Style.CYAN}{post_url}{Style.RESET}")
         print(f"      🔗 Profile URL:        {Style.CYAN}{profile_url}{Style.RESET}")
+        if conn_note:
+            print(f"      ✉️  BDE Connection Note: {Style.YELLOW}\"{conn_note}\"{Style.RESET}")
         print("-" * 80)
 
 

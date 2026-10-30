@@ -61,12 +61,14 @@ LinkedIn Scrapper/
 To run the standalone agent where anyone only enters the number of leads:
 
 ```bash
-./run_leads.sh
+./run_leads.sh -n 3
 ```
 
-- **User Input:** Asks only for the desired number of leads (e.g. `3`) and optional search time limit (e.g. `15` min).
-- **Autonomous Execution:** The agent autonomously cycles proven US tech hub and accelerator queries, performs 3-tier USA location verification, strictly qualifies direct Founders/CTOs with commercial buying intent, and captures authentic post shortlinks.
-- **Results:** Automatically saved in `python-agent/exports/` as both CSV and JSON, with a clean summary table printed to the console upon completion.
+- **Zero Manual Overhead:** The agent figures out the search queries, rotates across top US Tech Hubs (San Francisco, Austin, Seattle, NYC, Boston, YC) autonomously, filters out international leads (India, Pakistan, UK, Canada), and eliminates recruiters/staffing agencies.
+- **Strict Commercial Intent Gate:** Verifies active MVP development, developer hiring, or dev shop requirements while rejecting closed positions and thought-leadership fluff.
+- **3-Tier Authentic Post URL Resolver:** Resolves direct, permanent LinkedIn post links (never `activity:unknown`).
+- **Complete BDE Outreach Pitch Kit:** Automatically outputs personalized LinkedIn connection invite notes (< 300 chars) and 3-paragraph InMail pitches tailored for Indian software agencies.
+- **Pristine Export:** Exports ready-to-pitch spreadsheets to `python-agent/exports/latest_usa_sales_leads.csv` and timestamped session files.
 
 ### 2. Running Interactive Mode (Developer Steering)
 

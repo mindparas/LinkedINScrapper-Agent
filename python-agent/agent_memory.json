@@ -950,6 +950,196 @@
       "qualified_count": 1,
       "developer_guidance": "",
       "outcome": "1 genuine lead(s) qualified"
+    },
+    {
+      "timestamp": "2026-10-30T10:07:37.743603",
+      "query": "San Francisco founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Genuine decision-makers (Founders, CTOs) in tech startups seeking custom software or AI MVP engineering services.",
+      "cards_found": 3,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "3 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-30T10:07:54.145764",
+      "query": "Austin founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Genuine decision-makers (Founders, CTOs) in tech startups seeking custom software or AI MVP engineering services.",
+      "cards_found": 3,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "3 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-30T10:08:11.172544",
+      "query": "Seattle founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Genuine decision-makers (Founders, CTOs) in tech startups seeking custom software or AI MVP engineering services.",
+      "cards_found": 3,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "3 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-30T10:08:27.917645",
+      "query": "NYC founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Genuine decision-makers (Founders, CTOs) in tech startups seeking custom software or AI MVP engineering services.",
+      "cards_found": 3,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "3 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-30T10:08:45.547808",
+      "query": "YC founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Genuine decision-makers (Founders, CTOs) in tech startups seeking custom software or AI MVP engineering services.",
+      "cards_found": 3,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "3 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-30T10:09:00.820636",
+      "query": "South Park Commons founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Genuine decision-makers (Founders, CTOs) in tech startups seeking custom software or AI MVP engineering services.",
+      "cards_found": 2,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "2 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-30T10:09:18.208371",
+      "query": "Bay Area founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Genuine decision-makers (Founders, CTOs) in tech startups seeking custom software or AI MVP engineering services.",
+      "cards_found": 3,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "3 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-30T10:09:35.031946",
+      "query": "Boston founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Genuine decision-makers (Founders, CTOs) in tech startups seeking custom software or AI MVP engineering services.",
+      "cards_found": 3,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "3 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-30T10:09:57.829681",
+      "query": "building MVP custom software",
+      "freshness": "past-week",
+      "target_objective": "Genuine decision-makers (Founders, CTOs) in tech startups seeking custom software or AI MVP engineering services.",
+      "cards_found": 6,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "6 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-30T10:10:15.153755",
+      "query": "Denver founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Genuine decision-makers (Founders, CTOs) in tech startups seeking custom software or AI MVP engineering services.",
+      "cards_found": 9,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "9 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-30T10:10:33.682500",
+      "query": "looking for dev shop",
+      "freshness": "past-week",
+      "target_objective": "Genuine decision-makers (Founders, CTOs) in tech startups seeking custom software or AI MVP engineering services.",
+      "cards_found": 6,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "6 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-30T10:10:51.916853",
+      "query": "Los Angeles founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Genuine decision-makers (Founders, CTOs) in tech startups seeking custom software or AI MVP engineering services.",
+      "cards_found": 9,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "9 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-30T10:11:05.060380",
+      "query": "Techstars founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Genuine decision-makers (Founders, CTOs) in tech startups seeking custom software or AI MVP engineering services.",
+      "cards_found": 0,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "0 cards returned on LinkedIn (Zero results)"
+    },
+    {
+      "timestamp": "2026-10-30T10:11:22.733918",
+      "query": "hiring first engineer startup",
+      "freshness": "past-week",
+      "target_objective": "Genuine decision-makers (Founders, CTOs) in tech startups seeking custom software or AI MVP engineering services.",
+      "cards_found": 6,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "6 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-30T10:11:39.975151",
+      "query": "San Francisco hiring founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Genuine decision-makers (Founders, CTOs) in tech startups seeking custom software or AI MVP engineering services.",
+      "cards_found": 6,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "6 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-30T10:12:10.664838",
+      "query": "San Francisco building MVP",
+      "freshness": "past-week",
+      "target_objective": "Genuine decision-makers (Founders, CTOs) in tech startups seeking custom software or AI MVP engineering services.",
+      "cards_found": 6,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "6 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-30T10:12:16.937093",
+      "query": "San Francisco seeking engineer",
+      "freshness": "past-week",
+      "target_objective": "Genuine decision-makers (Founders, CTOs) in tech startups seeking custom software or AI MVP engineering services.",
+      "cards_found": 9,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "9 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-30T10:18:58.138919",
+      "query": "San Francisco founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Genuine decision-makers (Founders, CTOs) in tech startups seeking custom software or AI MVP engineering services.",
+      "cards_found": 9,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "9 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-30T10:19:54.668943",
+      "query": "Austin founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Genuine decision-makers (Founders, CTOs) in tech startups seeking custom software or AI MVP engineering services.",
+      "cards_found": 6,
+      "qualified_count": 1,
+      "developer_guidance": "",
+      "outcome": "1 genuine lead(s) qualified"
     }
   ],
   "user_feedback_history": [
@@ -1192,7 +1382,16 @@
       "company": "Asymptote Labs",
       "location": "New York, United States",
       "fit_score": 85
+    },
+    {
+      "timestamp": "2026-10-30T10:19:54.667331",
+      "author": "Austin Mejia",
+      "profile_url": "https://www.linkedin.com/in/austinmejia",
+      "post_url": "https://www.linkedin.com/in/austinmejia/recent-activity/all/",
+      "company": "Ambi",
+      "location": "San Francisco, California, United States",
+      "fit_score": 70
     }
   ],
-  "last_updated": "2026-10-29T10:23:31.687744"
+  "last_updated": "2026-10-30T10:19:54.668949"
 }

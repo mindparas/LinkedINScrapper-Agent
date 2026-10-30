@@ -15,7 +15,13 @@ from src.verification import (
     verify_bde_lead_authenticity,
     verify_sales_buying_intent,
 )
-from src.browser import search_web_api
+from src.browser import (
+    search_web_api,
+    scan_linkedin_content_cards,
+    resolve_post_url
+)
+from src.agent.planner import StrategicQueryPlanner
+from src.agent.evaluator import BDESalesIntelligenceSynthesizer
 
 class LinkedInAgentTools:
     """
@@ -29,8 +35,10 @@ class LinkedInAgentTools:
         self.logger = logger
         self.evaluated_fingerprints = set()
         self.active_developer_directives = active_developer_directives if active_developer_directives is not None else []
+        self.planner = StrategicQueryPlanner()
+        self.evaluator = BDESalesIntelligenceSynthesizer()
         
-        # Pre-seed fingerprints strictly with THIS session's leads (starts 100% clean)
+        # Pre-seed fingerprints strictly with THIS session's leads
         for l in self.exporter.leads:
             auth = (l.get("Author Name") or "").strip().lower()
             purl = (l.get("Profile URL") or "").strip().lower().split('?')[0].rstrip('/')
@@ -56,27 +64,8 @@ class LinkedInAgentTools:
         self.last_scanned_cards = []
         self.executed_queries = set()
 
-    PROVEN_US_QUERIES = [
-        "Seattle founding engineer",
-        "Austin founding engineer",
-        "NYC founding engineer",
-        "San Francisco founding engineer",
-        "Bay Area founding engineer",
-        "YC founding engineer",
-        "South Park Commons founding engineer",
-        "Techstars founding engineer",
-        "AI MVP founding engineer",
-        "Boston founding engineer",
-        "Denver founding engineer",
-        "founding engineer equity startup",
-        "Chicago founding engineer"
-    ]
-
     def get_next_recommended_query(self):
-        for q in self.PROVEN_US_QUERIES:
-            if q.lower() not in [x.lower() for x in self.executed_queries]:
-                return q
-        return "Seattle founding engineer"
+        return self.planner.get_next_recommended_query(self.executed_queries)
 
     @property
     def current_expected_output(self):
@@ -110,6 +99,12 @@ class LinkedInAgentTools:
                 cards_count=self.cards_on_current_query,
                 qualified_count=self.qualified_on_current_query
             )
+            self.planner.record_query_execution(
+                query=self.current_query,
+                freshness=self.current_freshness,
+                cards_found=self.cards_on_current_query,
+                qualified_count=self.qualified_on_current_query
+            )
 
         self.scroll_count_on_query = 0
         self.cards_on_current_query = 0
@@ -130,19 +125,18 @@ class LinkedInAgentTools:
         # Prominently display the Agent Cognitive Reasoning Card
         print("\n" + "=" * 80)
         print(f"{Style.CYAN}{Style.BOLD}🧠 [AGENT REASONING & SEARCH STRATEGY]{Style.RESET}")
-        print(f"🎯 {Style.BOLD}Target Objective (What it wants to achieve):{Style.RESET}\n   {target_objective or 'Targeting authentic founders building MVPs/software'}")
+        print(f"🎯 {Style.BOLD}Target Objective:{Style.RESET}\n   {target_objective or 'Targeting authentic founders building MVPs/software'}")
         print(f"🔍 {Style.BOLD}LinkedIn Search Query:{Style.RESET} {Style.YELLOW}'{clean_q}'{Style.RESET} ({self.current_freshness})")
         print(f"💡 {Style.BOLD}Strategic Rationale:{Style.RESET}\n   {query_rationale or 'Unquoted natural intent query for high recall'}")
-        print(f"🚀 {Style.BOLD}Feasibility Assessment (Will it achieve the goal?):{Style.RESET}\n   {feasibility_analysis or 'Matches active founder vernacular while filtering out recruiters'}")
+        print(f"🚀 {Style.BOLD}Feasibility Assessment:{Style.RESET}\n   {feasibility_analysis or 'Matches active founder vernacular while filtering out recruiters'}")
         if developer_feedback_alignment:
             print(f"💬 {Style.BOLD}Developer Feedback Integrated:{Style.RESET}\n   {Style.GREEN}{developer_feedback_alignment}{Style.RESET}")
         print("=" * 80)
 
+        # Developer Steering Point if interactive mode is explicitly enabled
         dev_hint = ""
-        if not os.environ.get("NON_INTERACTIVE"):
-            # Developer Live Steering Point BEFORE navigating on LinkedIn
-            print(f"\n{Style.CYAN}{Style.BOLD}💬 [DEVELOPER INTERACTION & STEERING]:{Style.RESET}")
-            print(f"   {Style.DIM}(Press ENTER to run this search, or type your instructions to steer/improve it){Style.RESET}")
+        if os.environ.get("NON_INTERACTIVE", "0") != "1":
+            print(f"\n{Style.CYAN}{Style.BOLD}💬 [DEVELOPER STEERING (Press ENTER to continue autonomously)]:{Style.RESET}")
             try:
                 dev_hint = input(f"   {Style.BOLD}Developer Guidance > {Style.RESET}").strip()
             except (EOFError, KeyboardInterrupt):
@@ -159,7 +153,7 @@ class LinkedInAgentTools:
                 "observation": (
                     f"DEVELOPER OVERRIDE: The developer reviewed your proposed query and gave direct guidance: '{dev_hint}'. "
                     f"Do NOT execute '{clean_q}'. You MUST immediately formulate a new search query strictly incorporating this feedback. "
-                    f"Ensure you do not use unnecessary double quotes and articulate your updated reasoning."
+                    f"Articulate your updated reasoning."
                 )
             }
 
@@ -183,7 +177,12 @@ class LinkedInAgentTools:
         self.last_dom_card_count = visible_cards
 
         if has_no_results or visible_cards == 0:
-            obs = f"0 results found on LinkedIn for '{clean_q}' (Freshness: {self.current_freshness}). Page displays 'No results found'. DO NOT SCROLL on this page! Analyze why this happened and immediately execute a different query or test past-week."
+            next_rec = self.get_next_recommended_query()
+            obs = (
+                f"0 results found on LinkedIn for '{clean_q}' (Freshness: {self.current_freshness}). "
+                f"Page displays 'No results found'. DO NOT SCROLL on this page! "
+                f"Recommended next move: Switch to 'past-week' freshness or execute proven US query: '{next_rec}'."
+            )
             status = "zero_results"
         else:
             obs = f"Search successfully returned results for '{clean_q}' (Freshness: {self.current_freshness}). Found {visible_cards} post cards visible. Call scan_and_read_cards to inspect them."
@@ -199,117 +198,13 @@ class LinkedInAgentTools:
         }
 
     def scan_and_read_cards(self):
-        try:
-            self.driver.execute_script("""
-                document.querySelectorAll('button[aria-label*="see more" i], .feed-shared-inline-show-more-text__see-more-less-toggle').forEach(b => { try { b.click(); } catch(_) {} });
-            """)
-            time.sleep(0.8)
-        except Exception:
-            pass
-
-        extract_script = """
-        const cards = [];
-        const commentBtns = Array.from(document.querySelectorAll('button[aria-label*="Comment" i], button[aria-label*="comment"]'));
-
-        for (let i = 0; i < commentBtns.length; i++) {
-            const btn = commentBtns[i];
-            let curr = btn.parentElement;
-            let postCard = null;
-            for (let d = 0; d < 25; d++) {
-                if (!curr || curr === document.body || curr.tagName === "MAIN") break;
-                const hasAuthor = !!curr.querySelector('a[href*="/in/"]');
-                const innerComments = curr.querySelectorAll('button[aria-label*="Comment" i], button[aria-label*="comment"]').length;
-                const text = (curr.innerText || "").trim();
-
-                if (hasAuthor && innerComments === 1 && text.length > 35) {
-                    postCard = curr;
-                    if (curr.parentElement) {
-                        const pComments = curr.parentElement.querySelectorAll('button[aria-label*="Comment" i], button[aria-label*="comment"]').length;
-                        if (pComments > 1) break;
-                    }
-                } else if (innerComments > 1) {
-                    break;
-                }
-                curr = curr.parentElement;
-            }
-            if (postCard && !cards.includes(postCard)) {
-                cards.push(postCard);
-            }
-        }
-
-        return cards.map((c, idx) => {
-            const lines = (c.innerText || "").split("\\n").map(l => l.trim()).filter(l => l.length > 0);
-            const nonFeed = lines.filter(l => l !== "Feed post");
-            
-            let authorName = nonFeed[0] || "Unknown";
-            let remaining = nonFeed.slice(1);
-            if (remaining.length && remaining[0].includes("•")) {
-                remaining = remaining.slice(1);
-            }
-            let headline = remaining[0] || "";
-            remaining = remaining.slice(1);
-            
-            let rawTime = "";
-            if (remaining.length && /^(\\d+\\s*(?:s|m|min|h|hr|d|day|w|wk|mo|yr)s?|just now|yesterday)(?:\\s*•.*)?$/i.test(remaining[0])) {
-                rawTime = remaining[0];
-                remaining = remaining.slice(1);
-            }
-            if (remaining.length && /^(?:follow|\\+ follow)$/i.test(remaining[0])) {
-                remaining = remaining.slice(1);
-            }
-            
-            let content = remaining.join(" ");
-
-            const authorEl = c.querySelector('a[href*="/in/"]');
-            const authorUrl = authorEl ? authorEl.href.split("?")[0] : "";
-
-            const isVerified = !!c.querySelector('[aria-label*="verified" i], [class*="verified"], [class*="trust-badge"]');
-            const compEl = c.querySelector('a[href*="/company/"]');
-            const company = compEl ? (compEl.innerText || "").split("\\n")[0].trim() : "";
-
-            // Direct extraction of exact post URL from card DOM
-            let directPostUrl = "";
-            const postAnchor = c.querySelector('a[href*="/feed/update/urn:li:"], a[href*="/posts/"], a.update-components-actor__sub-description-link, a[href*="/feed/update/"]');
-            if (postAnchor && postAnchor.href) {
-                directPostUrl = postAnchor.href.split("?")[0];
-            } else {
-                const dataUrn = c.getAttribute('data-urn') || c.getAttribute('data-activity-urn') || c.getAttribute('data-id');
-                if (dataUrn && dataUrn.includes('urn:li:')) {
-                    directPostUrl = `https://www.linkedin.com/feed/update/${dataUrn}/`;
-                } else {
-                    const childWithUrn = c.querySelector('[data-urn*="urn:li:"], [data-id*="urn:li:"]');
-                    if (childWithUrn) {
-                        const cUrn = childWithUrn.getAttribute('data-urn') || childWithUrn.getAttribute('data-id');
-                        if (cUrn) directPostUrl = `https://www.linkedin.com/feed/update/${cUrn}/`;
-                    }
-                }
-            }
-
-            return {
-                card_index: idx,
-                author: authorName,
-                headline: headline,
-                author_url: authorUrl,
-                post_url: directPostUrl,
-                company: company,
-                is_verified: isVerified,
-                raw_timestamp: rawTime,
-                content: content.substring(0, 500)
-            };
-        });
-        """
-
-        try:
-            cards = self.driver.execute_script(extract_script) or []
-        except Exception as e:
-            self.logger.error(f"Error extracting cards: {e}")
-            cards = []
+        cards = scan_linkedin_content_cards(self.driver, self.logger)
 
         unevaluated_cards = []
         for c in cards:
-            fp = (c["author"] + "_" + c["content"][:35]).lower()
-            auth_low = c["author"].strip().lower()
-            url_clean = c["author_url"].strip().lower().split('?')[0].rstrip('/')
+            fp = (c.get("author", "") + "_" + c.get("content", "")[:35]).lower()
+            auth_low = c.get("author", "").strip().lower()
+            url_clean = c.get("author_url", "").strip().lower().split('?')[0].rstrip('/')
 
             # Exclude profiles or authors already evaluated or qualified in THIS session
             if any((ex.get("Profile URL") or "").strip().lower().split('?')[0].rstrip('/') == url_clean for ex in self.exporter.leads):
@@ -317,13 +212,18 @@ class LinkedInAgentTools:
             if auth_low in self.evaluated_fingerprints or url_clean in self.evaluated_fingerprints:
                 continue
 
-            if fp not in self.evaluated_fingerprints and len(c["content"]) > 15:
-                c["parsed_age_days"] = round(parse_post_age(c["raw_timestamp"]), 2)
-                is_auth, auth_hint = verify_bde_lead_authenticity(c["author"], c["headline"], "", c["company"], c["content"])
-                has_intent, intent_hint = verify_sales_buying_intent(c["content"], c["headline"])
+            content = c.get("content", "")
+            if fp not in self.evaluated_fingerprints and len(content) > 15:
+                c["parsed_age_days"] = round(parse_post_age(c.get("raw_timestamp", "")), 2)
+                is_auth, auth_hint = verify_bde_lead_authenticity(c.get("author", ""), c.get("headline", ""), "", c.get("company", ""), content)
+                has_intent, intent_hint = verify_sales_buying_intent(content, c.get("headline", ""))
+                
                 c["bde_authenticity_check"] = "PASS: Direct Founder/Exec" if is_auth else f"FLAGGED: {auth_hint}"
                 c["sales_intent_check"] = f"HIGH INTENT: {intent_hint}" if has_intent else f"LOW/NO INTENT: {intent_hint}"
-                c["buying_intent_signal"] = intent_hint if has_intent else "No technical buying intent"
+                c["buying_intent_signal"] = intent_hint if has_intent else "No commercial technical buying intent"
+                
+                # Assign stable card_index based on position in this scan
+                c["card_index"] = len(unevaluated_cards)
                 unevaluated_cards.append(c)
 
         self.last_scanned_cards = unevaluated_cards
@@ -350,10 +250,18 @@ class LinkedInAgentTools:
         return {
             "cards_found_count": len(unevaluated_cards),
             "cards": unevaluated_cards,
-            "observation": f"Extracted {len(unevaluated_cards)} new post cards from the DOM. Read them carefully. If a candidate looks like an authentic decision-maker, call verify_profile_location to check their exact US location, or call qualify_and_save_lead."
+            "observation": (
+                f"Extracted {len(unevaluated_cards)} new post cards from the DOM. Read them carefully. "
+                f"If a candidate looks like an authentic decision-maker with active buying intent, call verify_profile_location "
+                f"to check their exact US location, then call qualify_and_save_lead."
+            )
         }
 
-    def verify_profile_location(self, card_index: int, author_url: str):
+    def verify_profile_location(self, card_index: int = 0, author_url: str = ""):
+        # Match author_url from cached card if card_index provided
+        if card_index < len(self.last_scanned_cards) and not author_url:
+            author_url = self.last_scanned_cards[card_index].get("author_url", "")
+
         if not author_url or "linkedin.com/in/" not in author_url:
             return {
                 "author_url": author_url,
@@ -370,7 +278,7 @@ class LinkedInAgentTools:
             self.driver.switch_to.new_window("tab")
             self.driver.get(author_url)
 
-            # 1. Wait dynamically up to 7 seconds for React hydration (check body innerText length > 500)
+            # Wait dynamically up to 7 seconds for React hydration
             for _ in range(14):
                 ready = self.driver.execute_script("""
                     return !!(document.body && (document.body.innerText || '').length > 500);
@@ -393,7 +301,6 @@ class LinkedInAgentTools:
             }
 
             // 2. Primary Method: Relative proximity to 'Contact info' anchor or button
-            // On modern LinkedIn profiles, location text is immediately above or adjacent to 'Contact info'
             const allEl = Array.from(document.querySelectorAll('a, button, span, div'));
             const contactEl = allEl.find(el => (el.innerText || '').trim().toLowerCase() === 'contact info');
 
@@ -475,7 +382,7 @@ class LinkedInAgentTools:
                 if self.consecutive_non_usa_count >= 2:
                     obs += f"\n🚨 EARLY BAILOUT ALERT: {self.consecutive_non_usa_count} consecutive cards in this search are from non-US/international locations! This feed is globally contaminated. STOP scrolling this feed immediately and execute a new search query targeting a specific US Metro (e.g. 'San Francisco', 'Austin', 'NYC') or US accelerator ('YC')."
 
-            self.logger.info(f"Profile verification for {author_url}: Location='{exact_location}', Confirmed USA={is_usa} ({reason}, method={profile_info.get('method')})")
+            self.logger.info(f"Profile verification for {author_url}: Location='{exact_location}', Confirmed USA={is_usa} ({reason})")
             print(f"      📍 Profile Top-Card Extracted: '{exact_location}' -> Confirmed USA: {is_usa} ({reason})")
 
             return {
@@ -500,111 +407,144 @@ class LinkedInAgentTools:
                 "observation": f"Could not verify profile location due to: {e}"
             }
 
-    def propose_code_improvement(self, file_path: str, target_code: str, replacement_code: str, explanation: str, expected_benefit: str):
-        print("\n" + "=" * 80)
-        print(f"{Style.YELLOW}{Style.BOLD}🛠️ AGENT SELF-IMPROVEMENT PROPOSAL (User Permission Required){Style.RESET}")
-        print(f"📁 Target File: {Style.CYAN}{file_path}{Style.RESET}")
-        print(f"📖 Detailed Explanation: {explanation}")
-        print(f"🚀 Expected Benefit: {expected_benefit}")
-        print("-" * 80)
-        print(f"{Style.RED}--- TARGET CODE TO BE REPLACED ---{Style.RESET}")
-        print(target_code[:400] + ("..." if len(target_code) > 400 else ""))
-        print(f"{Style.GREEN}+++ REPLACEMENT CODE TO BE INSERTED ---{Style.RESET}")
-        print(replacement_code[:400] + ("..." if len(replacement_code) > 400 else ""))
-        print("=" * 80)
+    def qualify_and_save_lead(
+        self,
+        card_index: int,
+        author: str,
+        profile_url: str,
+        headline: str,
+        role: str,
+        company: str,
+        location: str,
+        fit_score: int,
+        custom_pitch: str,
+        reasoning: str,
+        buying_intent_signal: str = ""
+    ):
+        card = {}
+        if card_index < len(self.last_scanned_cards):
+            card = self.last_scanned_cards[card_index]
 
-        try:
-            user_perm = input(f"{Style.CYAN}Do you approve applying this code improvement? (y/n, default: y): {Style.RESET}").strip().lower()
-        except (EOFError, KeyboardInterrupt):
-            user_perm = "n"
+        # Match by author or profile_url if card_index points to a different candidate
+        if card.get("author") != author:
+            for c in self.last_scanned_cards:
+                if c.get("author") == author or (profile_url and c.get("author_url") == profile_url):
+                    card = c
+                    break
 
-        if user_perm not in ["y", "yes", ""]:
-            self.logger.info("User declined agent's proposed code modification.")
+        card_content = card.get("content", "")
+        card_id = card.get("card_id", "")
+        clean_profile_url = (profile_url or card.get("author_url", "")).strip()
+
+        # Strict Authenticity Guardrail
+        is_authentic, auth_reason = verify_bde_lead_authenticity(
+            author=author,
+            headline=headline,
+            role=role,
+            company=company,
+            post_content=card_content
+        )
+        if not is_authentic:
+            self.logger.warning(f"Rejected lead qualification for {author}: {auth_reason}")
+            print(f"      ⚠️ Disqualified Lead Candidate: '{author}' — Reason: {auth_reason}")
             return {
-                "status": "declined",
-                "observation": "User declined the proposed code modification. Continue using existing tools."
+                "status": "lead_disqualified",
+                "author": author,
+                "rejection_reason": auth_reason,
+                "observation": f"Disqualified lead candidate '{author}'. Reason: {auth_reason}. Lead MUST be an authentic direct Founder/CTO/CEO/VP of their own tech startup, NOT a recruiter or broker."
             }
 
-        # Resolve path safely
-        resolved_path = file_path
-        if not os.path.isabs(resolved_path):
-            candidate = os.path.join(BASE_DIR, resolved_path)
-            if os.path.exists(candidate):
-                resolved_path = candidate
-
-        # Apply change safely with backup & compilation verification
-        if not os.path.exists(resolved_path):
+        # Strict B2B Sales Intent Filter
+        has_intent, auto_intent_signal = verify_sales_buying_intent(card_content or reasoning, headline)
+        if not has_intent:
+            self.logger.warning(f"Rejected lead qualification for {author}: {auto_intent_signal}")
+            print(f"      ⚠️ Disqualified Lead Candidate: '{author}' — No Commercial Buying Intent: {auto_intent_signal}")
             return {
-                "status": "error",
-                "observation": f"File '{file_path}' does not exist on disk."
+                "status": "lead_disqualified",
+                "author": author,
+                "rejection_reason": auto_intent_signal,
+                "observation": f"Disqualified lead candidate '{author}'. Reason: {auto_intent_signal}. For sales, the candidate post MUST express an active development need, MVP build, technical problem, or hiring for builders/engineers."
             }
+        intent_signal = auto_intent_signal
 
-        backup_path = f"{resolved_path}.bak"
-        try:
-            with open(resolved_path, "r", encoding="utf-8") as f:
-                content = f.read()
+        # Resolve authentic post URL using our 3-tier resolver
+        post_url = resolve_post_url(
+            driver=self.driver,
+            card_id=card_id,
+            author_url=clean_profile_url,
+            post_content_snippet=card_content,
+            direct_post_url=card.get("direct_post_url", ""),
+            logger=self.logger
+        )
 
-            if target_code not in content:
-                return {
-                    "status": "error",
-                    "observation": f"Target code snippet was not found in {file_path}. Ensure exact matching whitespace and indentation."
-                }
+        # Synthesize tailored BDE outreach kit
+        pitch_kit = self.evaluator.synthesize_pitch_kit(
+            author=author,
+            headline=headline,
+            company=company,
+            location=location,
+            post_content=card_content
+        )
 
-            with open(backup_path, "w", encoding="utf-8") as f:
-                f.write(content)
+        lead_record = {
+            "Author Name": author,
+            "First Name": pitch_kit["first_name"],
+            "Title / Headline": headline,
+            "Company Name": company,
+            "Verified Location": location,
+            "Profile URL": clean_profile_url,
+            "Post URL": post_url,
+            "Post Age": card.get("raw_timestamp", ""),
+            "Fit Score": fit_score,
+            "Commercial Intent Category": pitch_kit["intent_category"],
+            "Identified Pain Point": pitch_kit["pain_point"],
+            "Target Tech Stack": pitch_kit["tech_stack"],
+            "LinkedIn Connection Note (<300 chars)": pitch_kit["connection_note"],
+            "Full BDE InMail / Cold Pitch": pitch_kit["inmail_pitch"],
+            "Buying Intent Signal": intent_signal,
+            "Custom Outreach Hook": custom_pitch or pitch_kit["connection_note"],
+            "Reasoning": reasoning
+        }
 
-            new_content = content.replace(target_code, replacement_code, 1)
-            with open(resolved_path, "w", encoding="utf-8") as f:
-                f.write(new_content)
+        self.exporter.append_lead(lead_record)
+        self.memory.record_qualified_lead(lead_record)
+        self.qualified_on_current_query += 1
+        total_leads = len(self.exporter.leads)
 
-            try:
-                py_compile.compile(resolved_path, doraise=True)
-            except Exception as comp_err:
-                with open(backup_path, "r", encoding="utf-8") as f:
-                    f.write(content)
-                self.logger.error(f"Syntax error compiling modified code: {comp_err}")
-                return {
-                    "status": "syntax_error",
-                    "observation": f"Code modification caused a syntax error ({comp_err}). Successfully rolled back to backup."
-                }
+        # Mark fingerprint and profile as evaluated to prevent duplicates
+        self.evaluated_fingerprints.add((author + "_" + reasoning[:30]).lower())
+        if author:
+            self.evaluated_fingerprints.add(author.strip().lower())
+        if clean_profile_url:
+            self.evaluated_fingerprints.add(clean_profile_url.strip().lower().split('?')[0].rstrip('/'))
 
-            self.logger.info(f"Agent successfully updated {file_path}. Benefit: {expected_benefit}")
-            print(f"{Style.GREEN}✅ Code improvement successfully verified and applied to {file_path}!{Style.RESET}\n")
-            return {
-                "status": "applied_successfully",
-                "observation": f"Code improvement successfully verified and applied to {file_path}. The tool/logic is now upgraded."
-            }
-
-        except Exception as e:
-            self.logger.error(f"Error applying code modification: {e}")
-            return {
-                "status": "error",
-                "observation": f"Failed to apply modification due to: {e}"
-            }
-
-    def ask_developer(self, question: str, context: str = ""):
-        print("\n" + "=" * 80)
-        print(f"{Style.YELLOW}{Style.BOLD}🤖 AGENT ASKING DEVELOPER FOR GUIDANCE{Style.RESET}")
-        if context:
-            print(f"📌 Context: {context}")
-        print(f"❓ Question from Agent: {Style.BOLD}{question}{Style.RESET}")
-        print("=" * 80)
-
-        try:
-            answer = input(f"{Style.CYAN}Enter your advice/instruction for the agent: {Style.RESET}").strip()
-        except (EOFError, KeyboardInterrupt):
-            answer = ""
-
-        if not answer:
-            answer = "Proceed using your best judgment based on memory and guidelines."
-
-        self.logger.info(f"Agent asked developer: '{question}' | Developer responded: '{answer}'")
-        print(f"{Style.GREEN}✓ Guidance delivered to agent.{Style.RESET}\n")
+        log_qualified(f"[{total_leads}] {author} | {role} @ {company} | Score: {fit_score}/100")
+        print(f"      🔗 Profile URL: {clean_profile_url}")
+        print(f"      📌 Authentic Post URL: {post_url}")
+        print(f"      📍 Location: {location}")
+        print(f"      💼 Tech Stack: {pitch_kit['tech_stack']}")
+        print(f"      💡 Connection Note: {Style.BOLD}{pitch_kit['connection_note']}{Style.RESET}")
 
         return {
-            "status": "guidance_received",
-            "developer_guidance": answer,
-            "observation": f"Developer response: '{answer}'. Follow this instruction."
+            "status": "lead_saved_successfully",
+            "author": author,
+            "profile_url": clean_profile_url,
+            "post_url": post_url,
+            "fit_score": fit_score,
+            "buying_intent_signal": intent_signal,
+            "total_qualified_leads_collected": total_leads,
+            "observation": f"Successfully qualified and saved lead #{total_leads} ({author}). Specific post URL captured: {post_url}."
+        }
+
+    def skip_card(self, card_index: int, author: str, rejection_reason: str):
+        self.skipped_count += 1
+        self.evaluated_fingerprints.add((author + "_" + rejection_reason[:25]).lower())
+        log_skipped(f"Card #{card_index} ({author}) — Reason: {rejection_reason}")
+        return {
+            "status": "card_skipped",
+            "author": author,
+            "reason": rejection_reason,
+            "observation": f"Skipped card #{card_index} ({author}). Reason: {rejection_reason}."
         }
 
     def scroll_feed(self, steps: int = 1, rationale: str = ""):
@@ -661,216 +601,6 @@ class LinkedInAgentTools:
             "observation": f"Scrolled {steps} step(s). Total cards in DOM: {total_cards} (+{new_cards_loaded} new). Call scan_and_read_cards to inspect the newly loaded cards."
         }
 
-    def qualify_and_save_lead(self, card_index: int, author: str, profile_url: str, headline: str, role: str, company: str, location: str, fit_score: int, custom_pitch: str, reasoning: str, buying_intent_signal: str = ""):
-        # Strict Authenticity Guardrail: Disqualify VCs, media, curators, recruiters, and non-founders
-        card_content = ""
-        if card_index < len(self.last_scanned_cards):
-            card_content = self.last_scanned_cards[card_index].get("content", "")
-
-        is_authentic, auth_reason = verify_bde_lead_authenticity(author=author, headline=headline, role=role, company=company, post_content=card_content)
-        if not is_authentic:
-            self.logger.warning(f"Rejected lead qualification for {author}: {auth_reason}")
-            print(f"      ⚠️ Disqualified Lead Candidate: '{author}' — Reason: {auth_reason}")
-            return {
-                "status": "lead_disqualified",
-                "author": author,
-                "rejection_reason": auth_reason,
-                "observation": f"Disqualified lead candidate '{author}'. Reason: {auth_reason}. Lead MUST be an authentic direct Founder, Co-Founder, CEO, CTO, or VP of Engineering of their own software/AI startup, NOT a recruiter, broker, scout, or media page. Call skip_card or inspect next card."
-            }
-
-        # Strict B2B Sales Intent Filter: Post MUST express active technical/MVP/building need
-        has_intent, auto_intent_signal = verify_sales_buying_intent(card_content or reasoning, headline)
-        if not has_intent:
-            self.logger.warning(f"Rejected lead qualification for {author}: {auto_intent_signal}")
-            print(f"      ⚠️ Disqualified Lead Candidate: '{author}' — No Commercial Buying Intent: {auto_intent_signal}")
-            return {
-                "status": "lead_disqualified",
-                "author": author,
-                "rejection_reason": auto_intent_signal,
-                "observation": f"Disqualified lead candidate '{author}'. Reason: {auto_intent_signal}. For sales, the candidate post MUST express an active development need, MVP build, technical problem, or hiring for builders/engineers. Call skip_card."
-            }
-        intent_signal = auto_intent_signal
-
-        post_url = ""
-        # Check pre-extracted post URL from card scan first
-        if card_index < len(self.last_scanned_cards):
-            pre_url = self.last_scanned_cards[card_index].get("post_url", "")
-            if pre_url and "unknown" not in pre_url:
-                post_url = pre_url
-
-        # Step 1: Setup in-page clipboard hook before clicking
-        try:
-            self.driver.execute_script("""
-                window.__bdeCaptured = null;
-                if (navigator.clipboard) {
-                    const origWrite = navigator.clipboard.writeText;
-                    navigator.clipboard.writeText = function(text) {
-                        window.__bdeCaptured = text;
-                        if (origWrite) return origWrite.apply(navigator.clipboard, arguments);
-                        return Promise.resolve();
-                    };
-                }
-            """)
-
-            # Step 2: Precisely target the 3-dots control menu button INSIDE THIS SPECIFIC CARD
-            click_dots_js = f"""
-            const commentBtns = Array.from(document.querySelectorAll('button[aria-label*="Comment" i], button[aria-label*="comment"]'));
-            const cards = [];
-            for (let i = 0; i < commentBtns.length; i++) {{
-                let curr = commentBtns[i].parentElement;
-                let postCard = null;
-                for (let d = 0; d < 25; d++) {{
-                    if (!curr || curr === document.body || curr.tagName === "MAIN") break;
-                    const hasAuthor = !!curr.querySelector('a[href*="/in/"]');
-                    const innerComments = curr.querySelectorAll('button[aria-label*="Comment" i], button[aria-label*="comment"]').length;
-                    const text = (curr.innerText || "").trim();
-                    if (hasAuthor && innerComments === 1 && text.length > 35) {{
-                        postCard = curr;
-                        if (curr.parentElement && curr.parentElement.querySelectorAll('button[aria-label*="Comment" i]').length > 1) break;
-                    }} else if (innerComments > 1) break;
-                    curr = curr.parentElement;
-                }}
-                if (postCard && !cards.includes(postCard)) cards.push(postCard);
-            }}
-            if ({card_index} >= cards.length) return false;
-            const targetCard = cards[{card_index}];
-            const dot = targetCard.querySelector('button[aria-label*="control menu" i], button[aria-label*="More actions" i], button[aria-label*="options" i]');
-            if (!dot) return false;
-            dot.scrollIntoView({{ block: "center" }});
-            dot.click();
-            return true;
-            """
-            clicked_dots = self.driver.execute_script(click_dots_js)
-            clicked_copy = False
-            if clicked_dots:
-                time.sleep(1.2)
-                # Click the "Copy link to post" item (dispatching click on both leaf <p> and container <div>)
-                click_copy_js = """
-                const candidates = [];
-                document.querySelectorAll("*").forEach(el => {
-                    const t = (el.innerText || "").trim().toLowerCase();
-                    if (t === "copy link to post" || t === "copy link") {
-                        candidates.push(el);
-                    }
-                });
-                if (candidates.length > 0) {
-                    for (let c = candidates.length - 1; c >= 0; c--) {
-                        try { candidates[c].click(); } catch(_) {}
-                    }
-                    return { success: true, count: candidates.length };
-                }
-                const openMenus = Array.from(document.querySelectorAll('[role="menu"], [role="listbox"], div[class*="dropdown"]')).map(m => (m.innerText || '').substring(0, 60));
-                return { success: false, count: 0, openMenus: openMenus };
-                """
-                copy_debug = self.driver.execute_script(click_copy_js) or {}
-                clicked_copy = copy_debug.get("success", False)
-                time.sleep(1.2)
-
-                captured = self.driver.execute_script("return window.__bdeCaptured || null;")
-                if captured and ("lnkd.in" in captured or "linkedin.com" in captured):
-                    post_url = captured.strip()
-
-                # Close dropdown cleanly
-                self.driver.execute_script("document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', bubbles: true }));")
-        except Exception as e:
-            self.logger.error(f"Error capturing post URL via 3-dots: {e}")
-
-        # Step 3: If 3-dots clipboard didn't capture, inspect postCard element for direct post anchor or activity/share URN
-        if not post_url:
-            try:
-                card_fallback_info = self.driver.execute_script(f"""
-                    const commentBtns = Array.from(document.querySelectorAll('button[aria-label*="Comment" i], button[aria-label*="comment"]'));
-                    const cards = [];
-                    for (let i = 0; i < commentBtns.length; i++) {{
-                        let curr = commentBtns[i].parentElement;
-                        let postCard = null;
-                        for (let d = 0; d < 25; d++) {{
-                            if (!curr || curr === document.body || curr.tagName === "MAIN") break;
-                            const hasAuthor = !!curr.querySelector('a[href*="/in/"]');
-                            const innerComments = curr.querySelectorAll('button[aria-label*="Comment" i]').length;
-                            if (hasAuthor && innerComments === 1) {{ postCard = curr; break; }}
-                            curr = curr.parentElement;
-                        }}
-                        if (postCard && !cards.includes(postCard)) cards.push(postCard);
-                    }}
-                    if ({card_index} >= cards.length) return null;
-                    const card = cards[{card_index}];
-                    const a = card.querySelector('a[href*="/feed/update/urn:li:"], a[href*="/posts/"], a.update-components-actor__sub-description-link, a[href*="/feed/update/"]');
-                    if (a && a.href) return {{ directUrl: a.href.split('?')[0] }};
-                    const urn = card.getAttribute('data-urn') || card.getAttribute('data-activity-urn') || card.getAttribute('data-id');
-                    if (urn && urn.includes('urn:li:')) return {{ activityUrn: urn }};
-                    return null;
-                """)
-                if card_fallback_info:
-                    if card_fallback_info.get("directUrl"):
-                        post_url = card_fallback_info["directUrl"]
-                    elif card_fallback_info.get("activityUrn"):
-                        urn = card_fallback_info["activityUrn"]
-                        post_url = f"https://www.linkedin.com/feed/update/{urn}/"
-            except Exception as e:
-                self.logger.error(f"Fallback post URL extraction error: {e}")
-
-        # If still empty, record specific unknown update rather than broad activity fallback
-        if not post_url:
-            post_url = "https://www.linkedin.com/feed/update/urn:li:activity:unknown"
-
-        # Ensure Profile URL is valid
-        clean_profile_url = profile_url.strip() if profile_url else ""
-
-        # Lead record with exact professional B2B sales CSV columns
-        lead_record = {
-            "Buying Intent Signal": intent_signal or "Active technical build / hiring need",
-            "Profile URL": clean_profile_url,
-            "Post URL": post_url,
-            "Fit Score": fit_score,
-            "Author Name": author,
-            "Title / Headline": headline,
-            "Verified Location": location,
-            "Company Name": company,
-            "Custom Outreach Hook": custom_pitch,
-            "Reasoning": reasoning
-        }
-
-        self.exporter.append_lead(lead_record)
-        self.memory.record_qualified_lead(lead_record)
-        self.qualified_on_current_query += 1
-        total_leads = len(self.exporter.leads)
-
-        # Mark fingerprint and profile as evaluated to prevent duplicates
-        self.evaluated_fingerprints.add((author + "_" + reasoning[:30]).lower())
-        if author:
-            self.evaluated_fingerprints.add(author.strip().lower())
-        if clean_profile_url:
-            self.evaluated_fingerprints.add(clean_profile_url.strip().lower().split('?')[0].rstrip('/'))
-
-        log_qualified(f"[{total_leads}] {author} | {role} @ {company} | Score: {fit_score}/100")
-        print(f"      🔗 Profile URL: {clean_profile_url}")
-        print(f"      📌 Authentic Post URL: {post_url}")
-        print(f"      📍 Location: {location}")
-        print(f"      💡 Custom Pitch Hook: {Style.BOLD}{custom_pitch}{Style.RESET}")
-
-        return {
-            "status": "lead_saved_successfully",
-            "author": author,
-            "profile_url": clean_profile_url,
-            "post_url": post_url,
-            "fit_score": fit_score,
-            "buying_intent_signal": intent_signal or "Active technical build / hiring need",
-            "total_qualified_leads_collected": total_leads,
-            "observation": f"Successfully qualified and saved lead #{total_leads} ({author}). Specific post URL captured: {post_url}."
-        }
-
-    def skip_card(self, card_index: int, author: str, rejection_reason: str):
-        self.skipped_count += 1
-        self.evaluated_fingerprints.add((author + "_" + rejection_reason[:25]).lower())
-        log_skipped(f"Card #{card_index} ({author}) — Reason: {rejection_reason}")
-        return {
-            "status": "card_skipped",
-            "author": author,
-            "reason": rejection_reason,
-            "observation": f"Skipped card #{card_index} ({author}). Reason: {rejection_reason}."
-        }
-
     def search_web(self, query: str, rationale: str = ""):
         self.logger.info(f"Agent web search: '{query}' | Rationale: {rationale}")
         results = search_web_api(query)
@@ -881,3 +611,16 @@ class LinkedInAgentTools:
             "observation": f"Web search for '{query}' returned {len(results)} snippets."
         }
 
+    def propose_code_improvement(self, file_path: str, target_code: str, replacement_code: str, explanation: str, expected_benefit: str):
+        # Automated non-interactive safety fallback
+        return {
+            "status": "declined",
+            "observation": "System is operating in autonomous production mode. Code updates must be deployed through repository pull requests."
+        }
+
+    def ask_developer(self, question: str, context: str = ""):
+        return {
+            "status": "autonomous_fallback",
+            "developer_guidance": "Proceed autonomously using verified US founder criteria and high commercial intent.",
+            "observation": "Proceed autonomously using verified US founder criteria and high commercial intent."
+        }

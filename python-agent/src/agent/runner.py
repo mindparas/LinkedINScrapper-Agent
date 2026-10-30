@@ -12,17 +12,14 @@ from src.config import (
     OPENAI_API_KEY,
     BASE_DIR
 )
-from src.tools.agent_tools import LinkedInAgentTools
 from src.tools.schemas import AGENT_TOOLS
 
 def run_autonomous_agent(driver, niche, target_limit, exporter, memory, logger, max_duration_seconds=None):
     """
     Core ReAct Cognitive Loop for Autonomous BDE Lead Discovery.
-    Orchestrates LLM decision making, tool calls, and developer feedback loops.
+    Orchestrates LLM decision making, sensor actuation, and self-debugging navigation.
     """
-    # Fresh Session: Start completely clean every run!
-    # Do NOT load past feedback guidance or old failure logs into the active session.
-    # Directives are only gathered dynamically at runtime during the current session.
+    from src.tools.agent_tools import LinkedInAgentTools
     active_developer_directives = []
 
     tools_engine = LinkedInAgentTools(
@@ -33,10 +30,6 @@ def run_autonomous_agent(driver, niche, target_limit, exporter, memory, logger, 
         active_developer_directives=active_developer_directives
     )
 
-    # Fresh Session: Do NOT load past session history or old failure logs into the active thinking prompt!
-    # The agent starts 100% clean every run, learning only dynamically within the current runtime session.
-    session_queries_summary = ""
-
     # Dynamic US Time Context (UTC-5 EST / UTC-8 PST)
     now_utc = datetime.utcnow()
     est_hour = (now_utc.hour - 5) % 24
@@ -45,42 +38,43 @@ def run_autonomous_agent(driver, niche, target_limit, exporter, memory, logger, 
 
     us_time_guidance = (
         f"- CURRENT US TIME: ~{est_hour:02d}:00 EST / ~{pst_hour:02d}:00 PST ({'NIGHT/OFFLINE in USA' if is_us_night else 'ACTIVE US BUSINESS HOURS'}).\n"
-        f"  * Use 'past-week' freshness to surface the highest-yield posts from active US founders across the business week.\n\n"
+        f"  * During non-business hours, favor 'past-week' freshness to surface the highest-yield posts from active US founders across the business week.\n\n"
     )
 
     system_prompt = f"""You are an elite, fully autonomous Business Development Executive (BDE) AI Agent discovering prospective high-intent sales client leads on LinkedIn.
 AGENCY SERVICE / NICHE: {niche}
 TARGET GEOGRAPHY: United States ONLY (User is working remotely from India; you must strictly eliminate India, Pakistan, UK, and international leads).
-ROLE RESTRICTION: Absolutely NO HR managers, recruiters, headhunters, staffing brokers (e.g. people connecting professionals/candidates), job seekers, OR INTERMEDIARIES (VCs, investors, accelerators, media curators).
+ROLE RESTRICTION: Absolutely NO HR managers, recruiters, headhunters, staffing brokers (e.g. people connecting professionals/candidates or hiring for other startups), job seekers, OR INTERMEDIARIES (VCs, investors, accelerators, media curators).
 IDEAL CLIENTS (SALES-READY LEADS): Authentic direct decision-makers (Founders, Co-Founders, CEOs, CTOs, VPs of Engineering) of tech/software startups who have an ACTIVE TECHNICAL BUYING OR BUILDING NEED (e.g. building an MVP, seeking dev shop/agency, needing external engineering help, looking for AI development partners, or hiring founding builders).
 
 SESSION PERSISTENT CONTEXT & ISOLATED CSV:
 - Current Session CSV: {exporter.csv_path} (Mirrored to: {exporter.current_csv_path})
-- Current Session Leads Collected: {len(exporter.leads)} (Session starts fresh with 0 previous leads)
+- Current Session Leads Collected: {len(exporter.leads)} (Goal: {target_limit} leads)
 {us_time_guidance}CRITICAL OPERATIONAL INSTRUCTIONS & USA HIGH-INTENT SALES STRATEGY:
 1. STRICT COMMERCIAL BUYING INTENT FILTER:
    - A serious sales lead is NOT just anyone with "Founder" in their headline.
    - The candidate's post MUST express an active development need, MVP build, technical problem, or engineering hiring need.
-   - REJECT immediately if the author is a recruiter, headhunter, career coach, or talent broker (e.g., "connecting professionals", "executive search", "staffing").
+   - REJECT immediately if the author is a recruiter, headhunter, career coach, or talent broker (e.g., "connecting professionals", "executive search", "staffing", "hiring for startups").
    - REJECT generic motivational posts, news links, or self-promotional thought leadership with no active engineering requirement.
+   - REJECT if the hiring or role is already marked as filled, closed, or celebrated as completed.
 
-2. PROVEN HIGH-YIELD USA SEARCH PATTERNS (START FRESH):
+2. PROVEN HIGH-YIELD USA SEARCH PATTERNS:
    LinkedIn content search has NO native country filter. Generic phrases match globally and return 90%+ international candidates.
-   To guarantee high-yield USA leads, synthesize queries combining US Tech Hubs or US Accelerators with hiring/building intent (DO NOT USE QUOTES!):
+   To guarantee high-yield USA leads, synthesize natural unquoted queries combining US Tech Hubs or US Accelerators with hiring/building intent:
+   - San Francisco founding engineer
    - Austin founding engineer
    - Seattle founding engineer
    - NYC founding engineer
-   - San Francisco founding engineer
-   - Bay Area founding engineer
    - YC founding engineer
-   - Techstars founding engineer
    - South Park Commons founding engineer
-   - AI MVP founding engineer
+   - Bay Area founding engineer
+   - Boston founding engineer
+   - building MVP custom software
+   - Denver founding engineer
 
 3. STRICT SEARCH SYNTAX RULES (PREVENT ZERO RESULTS):
-   - NEVER use double quotes around keywords. Double quotes on LinkedIn enforce strict verbatim character matching which eliminates relevant variants (e.g. "founding engineer" misses "founding AI engineer", "founding full-stack engineer", "hiring our first engineer") and yields 0 results!
-   - NEVER put conversational sentences or clauses in quotes.
-   - NEVER put "United States" or "USA" in the query box (it yields 0 results because real US founders don't write "USA").
+   - NEVER use unnecessary double quotes around keywords. Double quotes on LinkedIn enforce strict verbatim character matching which eliminates relevant variants and yields 0 results!
+   - NEVER put "United States" or "USA" in the search box (it yields 0 results because real US founders don't write "USA").
    - Keep queries natural, concise, and focused on tech hubs and founder hiring vernacular.
 
 4. COGNITIVE REASONING & STRATEGY TRANSPARENCY:
@@ -89,31 +83,30 @@ SESSION PERSISTENT CONTEXT & ISOLATED CSV:
      * query: The US-anchored search keywords you autonomously synthesized.
      * query_rationale: Strategic reason why these specific keywords were selected for '{niche}'.
      * feasibility_analysis: Will this query achieve the objective, what posts will it attract, and why will it avoid noise and recruiters?
-     * developer_feedback_alignment: Explicitly how this query strictly obeys and incorporates all developer feedback.
+     * developer_feedback_alignment: Explicitly how this query strictly obeys and incorporates all guidance.
 
-5. DEVELOPER DIRECTIVES ARE TOP PRIORITY:
-   - Always prioritize and strictly obey any developer feedback, guidance, or critique provided. Never repeat a behavior or query that the developer criticized.
-
-6. EARLY FEED BAILOUT:
+5. EARLY FEED BAILOUT & RECOVERY:
    - If 2 consecutive cards in a search result fail USA qualification or belong to recruiters/freelancers, STOP scrolling that feed immediately! Formulate an improved query autonomously targeting a different US tech hub or accelerator.
+   - If 0 cards are returned, test 'past-week' freshness or rotate to the next high-yield US metro.
 
-7. DEEP PROFILE LOCATION VERIFICATION:
+6. DEEP PROFILE LOCATION VERIFICATION:
    - Inspect profile top-card for 100% US presence before qualifying.
 
-7. SINGLE CSV ACCUMULATION:
-   - All leads qualified during this session are saved to {exporter.csv_path}. Once you find a lead, the user will be prompted to continue or finish."""
+7. AUTONOMOUS CAMPAIGN COMPLETION:
+   - Only call finish_campaign when the target limit of {target_limit} genuine leads has been collected."""
 
     starting_leads_count = len(exporter.leads)
     target_total_leads = starting_leads_count + target_limit
 
+    initial_query = tools_engine.get_next_recommended_query()
     messages = [
         {"role": "system", "content": system_prompt},
-        {"role": "user", "content": f"Begin autonomous campaign. Current session CSV: '{exporter.csv_path}'. Goal: Discover genuine verified USA decision-maker leads for '{niche}'. Currently {starting_leads_count} leads in this session. Start by executing an unquoted search query in a top US tech hub (such as 'Seattle founding engineer' or 'Austin founding engineer'), scan cards, verify USA location, ensure candidate is an authentic Founder/CTO with active building or 1099 contract engineering need, and qualify and save the lead."}
+        {"role": "user", "content": f"Begin autonomous lead discovery campaign. Target: {target_limit} genuine verified USA decision-maker leads for '{niche}'. Session starts fresh with 0 previous leads. Start by executing an unquoted search query in a top US tech hub (such as '{initial_query}'), scan cards, verify USA location, ensure candidate is an authentic Founder/CTO with active building or engineering need, and qualify and save the leads."}
     ]
 
     is_finished = False
     turn = 0
-    max_turns = max(60, target_limit * 25)
+    max_turns = max(80, target_limit * 30)
     start_time = time.time()
 
     while not is_finished and len(exporter.leads) < target_total_leads and turn < max_turns:
@@ -126,8 +119,7 @@ SESSION PERSISTENT CONTEXT & ISOLATED CSV:
 
         turn += 1
 
-        # Self-healing message sanitization: Ensure every tool_call in assistant messages
-        # is immediately followed by its matching tool role messages before any user/assistant message.
+        # Self-healing message sanitization
         sanitized_messages = []
         msg_idx = 0
         while msg_idx < len(messages):
@@ -135,7 +127,6 @@ SESSION PERSISTENT CONTEXT & ISOLATED CSV:
             sanitized_messages.append(m)
             if m.get("role") == "assistant" and m.get("tool_calls"):
                 expected_ids = {tc["id"] for tc in m["tool_calls"]}
-                # Collect trailing tool messages and any interleaved non-tool messages
                 next_idx = msg_idx + 1
                 matched_tool_msgs = []
                 interleaved_msgs = []
@@ -153,7 +144,6 @@ SESSION PERSISTENT CONTEXT & ISOLATED CSV:
                     next_idx += 1
 
                 sanitized_messages.extend(matched_tool_msgs)
-                # Fill any missing tool_call responses with a safe fallback
                 for missing_id in (expected_ids - found_ids):
                     sanitized_messages.append({
                         "role": "tool",
@@ -185,7 +175,7 @@ SESSION PERSISTENT CONTEXT & ISOLATED CSV:
                 headers=headers,
                 method="POST"
             )
-            with urllib.request.urlopen(req, timeout=25) as resp:
+            with urllib.request.urlopen(req, timeout=30) as resp:
                 resp_data = json.loads(resp.read().decode("utf-8"))
                 choice = resp_data["choices"][0]["message"]
         except urllib.error.HTTPError as e:
@@ -211,7 +201,7 @@ SESSION PERSISTENT CONTEXT & ISOLATED CSV:
         if not tool_calls:
             new_leads_found = len(exporter.leads) - starting_leads_count
             messages.append({"role": "assistant", "content": thought_content or ""})
-            messages.append({"role": "user", "content": f"Status: Found {new_leads_found}/{target_limit} new leads this run (Total in session CSV: {len(exporter.leads)}). Call execute_search, scan_and_read_cards, or scroll_feed to proceed."})
+            messages.append({"role": "user", "content": f"Status: Found {new_leads_found}/{target_limit} genuine leads (Total in session CSV: {len(exporter.leads)}). Call execute_search, scan_and_read_cards, or scroll_feed to proceed."})
             continue
 
         messages.append({
@@ -235,8 +225,8 @@ SESSION PERSISTENT CONTEXT & ISOLATED CSV:
 
             # ── Dispatch Tool Actions ────────────────────────────
             if fn_name == "execute_search":
-                q = args.get("query", "building MVP custom software")
-                fresh = args.get("freshness", "past-24h")
+                q = args.get("query", initial_query)
+                fresh = args.get("freshness", "past-week")
                 t_obj = args.get("target_objective", "")
                 q_rat = args.get("query_rationale", args.get("rationale", ""))
                 feas = args.get("feasibility_analysis", "")
@@ -276,17 +266,17 @@ SESSION PERSISTENT CONTEXT & ISOLATED CSV:
                     role=args.get("role", "Founder"),
                     company=args.get("company", ""),
                     location=args.get("location", "USA"),
-                    fit_score=args.get("fit_score", 85),
+                    fit_score=args.get("fit_score", 90),
                     custom_pitch=args.get("custom_pitch", ""),
                     reasoning=args.get("reasoning", ""),
                     buying_intent_signal=args.get("buying_intent_signal", "")
                 )
                 log_tool_result(result["observation"])
 
-                # Interactive prompt immediately when a genuine lead is qualified
                 if result.get("status") == "lead_saved_successfully":
+                    total_collected = len(exporter.leads)
                     print("\n" + "=" * 80)
-                    print(f"{Style.GREEN}{Style.BOLD}🎯 GENUINE VERIFIED USA SALES LEAD DISCOVERED & SAVED!{Style.RESET}")
+                    print(f"{Style.GREEN}{Style.BOLD}🎯 GENUINE VERIFIED USA SALES LEAD DISCOVERED & SAVED! [#{total_collected}/{target_total_leads}]{Style.RESET}")
                     print(f"   👤 Author: {Style.BOLD}{args.get('author')}{Style.RESET}")
                     print(f"   💼 Role & Company: {args.get('role')} @ {args.get('company') or 'Unknown'}")
                     print(f"   📍 Verified Location: {Style.GREEN}{args.get('location')}{Style.RESET}")
@@ -294,71 +284,21 @@ SESSION PERSISTENT CONTEXT & ISOLATED CSV:
                     print(f"   🔗 Profile URL: {Style.CYAN}{result.get('profile_url')}{Style.RESET}")
                     print(f"   📌 Authentic Post URL: {Style.CYAN}{result.get('post_url')}{Style.RESET}")
                     print(f"   ⭐ Fit Score: {args.get('fit_score')}/100")
-                    print(f"   💡 Custom Pitch Hook: {args.get('custom_pitch')}")
-                    print(f"   📁 Saved To CSV: {Style.CYAN}{exporter.csv_path}{Style.RESET} (Total: {len(exporter.leads)} leads in this session)")
+                    print(f"   📁 Saved To CSV: {Style.CYAN}{exporter.csv_path}{Style.RESET}")
                     print("=" * 80)
-                    print(f"{Style.CYAN}{Style.BOLD}👉 Found {len(exporter.leads)} genuine lead(s) in this session. Do you want the agent to continue searching for more?{Style.RESET}")
-                    print(f"   {Style.GREEN}[ENTER / Y]{Style.RESET} Yes, search for the next genuine lead in this session (appends to same CSV)")
-                    print(f"   {Style.RED}[N / Q]{Style.RESET} No, stop here and wrap up")
 
-                    is_non_interactive = os.environ.get("NON_INTERACTIVE", "0") == "1"
-                    if is_non_interactive:
-                        if len(exporter.leads) >= target_total_leads:
-                            is_finished = True
-                            user_resp = "n"
-                        else:
-                            user_resp = "y"
-                    else:
-                        try:
-                            user_resp = input(f"\n{Style.CYAN}Your choice (default: Y to continue): {Style.RESET}").strip().lower()
-                        except (EOFError, KeyboardInterrupt):
-                            user_resp = "n"
-
-                    if user_resp in ["n", "no", "q", "quit", "exit"]:
+                    if total_collected >= target_total_leads:
                         is_finished = True
+                        print(f"\n{Style.GREEN}{Style.BOLD}🏆 Target campaign goal of {target_limit} leads reached! Wrapping up...{Style.RESET}\n")
                     else:
-                        target_total_leads = max(target_total_leads, len(exporter.leads) + 1)
-                        user_feedback = ""
-                        
-                        if not is_non_interactive:
-                            # Interactive user feedback prompt to refine subsequent lead discovery
-                            print(f"\n{Style.YELLOW}{Style.BOLD}💬 DEVELOPER GUIDANCE & SPECIFIC PREFERENCES FOR NEXT SEARCH:{Style.RESET}")
-                            print(f"   {Style.DIM}(Share any feedback to guide the AI for the next lead, e.g.:{Style.RESET}")
-                            print(f"   {Style.DIM}  • 'Focus strictly on AI/ML or SaaS founders'{Style.RESET}")
-                            print(f"   {Style.DIM}  • 'Target Seed or Series A startups in California / NYC'{Style.RESET}")
-                            print(f"   {Style.DIM}  • 'Remove quotes from queries'{Style.RESET}")
-                            print(f"   {Style.DIM}  • Or press ENTER to continue with default high-intent founder criteria){Style.RESET}")
-                            
-                            try:
-                                user_feedback = input(f"   {Style.BOLD}Developer Guidance > {Style.RESET}").strip()
-                            except (EOFError, KeyboardInterrupt):
-                                user_feedback = ""
-
-                        if user_feedback:
-                            logger.info(f"User provided feedback after lead #{len(exporter.leads)} ({args.get('author')}): '{user_feedback}'")
-                            memory.record_user_feedback(lead_author=args.get('author'), feedback=user_feedback)
-                            tools_engine.active_developer_directives.append(user_feedback)
-                            print(f"   {Style.GREEN}✓ Developer guidance recorded & prioritized for next lead generation!{Style.RESET}\n")
-                            
-                            pending_user_directives.append({
-                                "role": "user",
-                                "content": (
-                                    f"Lead #{len(exporter.leads)} ({args.get('author')}) was qualified and saved to the session CSV.\n"
-                                    f"User confirmed to CONTINUE SEARCHING for the next genuine USA lead.\n"
-                                    f"CRITICAL DEVELOPER DIRECTIVE: \"{user_feedback}\".\n"
-                                    f"You MUST strictly follow this developer directive in your next search query formulation, reasoning, and candidate selection!\n"
-                                    f"Explain your complete cognitive reasoning in execute_search."
-                                )
-                            })
-                        else:
-                            pending_user_directives.append({
-                                "role": "user",
-                                "content": (
-                                    f"Lead #{len(exporter.leads)} ({args.get('author')}) was qualified and saved to the session CSV.\n"
-                                    f"User confirmed to CONTINUE SEARCHING for the next genuine USA lead.\n"
-                                    f"Formulate your next high-intent query (WITHOUT unnecessary double quotes) and state your complete cognitive reasoning."
-                                )
-                            })
+                        pending_user_directives.append({
+                            "role": "user",
+                            "content": (
+                                f"Lead #{total_collected} ({args.get('author')}) was qualified and saved to session CSV.\n"
+                                f"Goal: {total_collected}/{target_total_leads} leads collected.\n"
+                                f"Continue autonomous search for lead #{total_collected + 1}. Formulate your next strategic query or scan remaining cards."
+                            )
+                        })
 
             elif fn_name == "skip_card":
                 result = tools_engine.skip_card(
@@ -375,7 +315,7 @@ SESSION PERSISTENT CONTEXT & ISOLATED CSV:
                 log_tool_result(result["observation"])
 
             elif fn_name == "propose_code_improvement":
-                fp = args.get("file_path", "linkedin_bde_intelligent_pipeline.py")
+                fp = args.get("file_path", "")
                 t_code = args.get("target_code", "")
                 r_code = args.get("replacement_code", "")
                 expl = args.get("explanation", "")
@@ -397,11 +337,12 @@ SESSION PERSISTENT CONTEXT & ISOLATED CSV:
 
             elif fn_name == "finish_campaign":
                 if len(exporter.leads) < target_total_leads:
+                    next_rec = tools_engine.get_next_recommended_query()
                     result = {
                         "status": "target_not_reached",
-                        "observation": f"CANNOT FINISH: Target lead count not achieved yet ({len(exporter.leads)}/{target_total_leads} leads qualified). You must continue searching: formulate a new search query targeting another US tech hub (e.g. Austin founding engineer, Seattle founding engineer, NYC founding engineer, YC founding engineer) or scroll down to load more cards."
+                        "observation": f"CANNOT FINISH: Target lead count not achieved yet ({len(exporter.leads)}/{target_total_leads} leads qualified). You must continue searching: formulate a new search query targeting another US tech hub (e.g. '{next_rec}') or scroll down to load more cards."
                     }
-                    log_agent_thought(f"Campaign Finish rejected: Target lead count ({target_total_leads}) not achieved yet. Must continue searching.")
+                    log_agent_thought(f"Campaign Finish rejected: Target lead count ({target_total_leads}) not achieved yet.")
                 else:
                     summary = args.get("final_summary", "Campaign finished.")
                     is_finished = True
@@ -419,7 +360,6 @@ SESSION PERSISTENT CONTEXT & ISOLATED CSV:
 
             if is_finished or len(exporter.leads) >= target_total_leads:
                 is_finished = True
-                # Ensure all remaining tool_calls in this turn get responses so message history remains valid
                 for rem_tc in tool_calls[tc_idx + 1:]:
                     messages.append({
                         "role": "tool",
@@ -428,7 +368,6 @@ SESSION PERSISTENT CONTEXT & ISOLATED CSV:
                     })
                 break
 
-        # Append developer directives AFTER all tool messages have been appended
         for pud in pending_user_directives:
             messages.append(pud)
 
@@ -456,4 +395,3 @@ SESSION PERSISTENT CONTEXT & ISOLATED CSV:
         }, f, indent=2, ensure_ascii=False)
 
     return tools_engine
-
