@@ -1140,6 +1140,516 @@
       "qualified_count": 1,
       "developer_guidance": "",
       "outcome": "1 genuine lead(s) qualified"
+    },
+    {
+      "timestamp": "2026-10-30T16:16:09.688508",
+      "query": "San Francisco founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Genuine decision-makers (Founders, CTOs) in need of custom software & AI MVP engineering services.",
+      "cards_found": 6,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "6 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-30T16:16:43.959735",
+      "query": "Austin founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Genuine decision-makers (Founders, CTOs) in need of custom software & AI MVP engineering services.",
+      "cards_found": 9,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "9 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-30T16:17:14.791763",
+      "query": "Seattle founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Genuine decision-makers (Founders, CTOs) in need of custom software & AI MVP engineering services.",
+      "cards_found": 3,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "3 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-30T16:17:26.803783",
+      "query": "NYC founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Genuine decision-makers (Founders, CTOs) in need of custom software & AI MVP engineering services.",
+      "cards_found": 3,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "3 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-30T16:33:24.461041",
+      "query": "San Francisco founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Tech founders seeking custom software and AI MVP engineering partners",
+      "cards_found": 6,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "6 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-30T16:33:50.089692",
+      "query": "Austin founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Tech founders seeking custom software and AI MVP engineering partners",
+      "cards_found": 9,
+      "qualified_count": 1,
+      "developer_guidance": "",
+      "outcome": "1 genuine lead(s) qualified"
+    },
+    {
+      "timestamp": "2026-10-30T16:34:08.249899",
+      "query": "NYC founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Tech founders seeking custom software and AI MVP engineering partners",
+      "cards_found": 6,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "6 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-30T16:34:18.756772",
+      "query": "Seattle founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Tech founders seeking custom software and AI MVP engineering partners",
+      "cards_found": 9,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "9 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-30T16:34:28.923723",
+      "query": "Denver founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Tech founders seeking custom software and AI MVP engineering partners",
+      "cards_found": 9,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "9 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-30T16:34:40.586529",
+      "query": "Boston founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Tech founders seeking custom software and AI MVP engineering partners",
+      "cards_found": 6,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "6 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-30T16:34:59.950972",
+      "query": "Miami founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Tech founders seeking custom software and AI MVP engineering partners",
+      "cards_found": 3,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "3 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-30T16:35:11.640840",
+      "query": "Chicago founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Tech founders seeking custom software and AI MVP engineering partners",
+      "cards_found": 6,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "6 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-30T16:35:22.554044",
+      "query": "Philadelphia founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Tech founders seeking custom software and AI MVP engineering partners",
+      "cards_found": 3,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "3 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-30T16:35:35.580037",
+      "query": "Phoenix founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Tech founders seeking custom software and AI MVP engineering partners",
+      "cards_found": 3,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "3 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-30T16:35:47.434518",
+      "query": "San Diego founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Tech founders seeking custom software and AI MVP engineering partners",
+      "cards_found": 6,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "6 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-30T16:36:00.417431",
+      "query": "Las Vegas founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Tech founders seeking custom software and AI MVP engineering partners",
+      "cards_found": 4,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "4 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-30T16:36:10.561364",
+      "query": "Atlanta founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Tech founders seeking custom software and AI MVP engineering partners",
+      "cards_found": 6,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "6 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-30T16:36:20.126073",
+      "query": "Detroit founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Tech founders seeking custom software and AI MVP engineering partners",
+      "cards_found": 6,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "6 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-30T16:36:31.774027",
+      "query": "Baltimore founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Tech founders seeking custom software and AI MVP engineering partners",
+      "cards_found": 2,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "2 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-30T16:36:43.120659",
+      "query": "Charlotte founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Tech founders seeking custom software and AI MVP engineering partners",
+      "cards_found": 4,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "4 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-30T16:36:53.028124",
+      "query": "Nashville founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Tech founders seeking custom software and AI MVP engineering partners",
+      "cards_found": 1,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "1 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-30T16:37:05.111620",
+      "query": "Cleveland founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Tech founders seeking custom software and AI MVP engineering partners",
+      "cards_found": 2,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "2 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-30T16:37:15.482236",
+      "query": "Indianapolis founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Tech founders seeking custom software and AI MVP engineering partners",
+      "cards_found": 1,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "1 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-30T16:37:26.925514",
+      "query": "Salt Lake City founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Tech founders seeking custom software and AI MVP engineering partners",
+      "cards_found": 2,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "2 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-30T16:37:38.907339",
+      "query": "Tampa founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Tech founders seeking custom software and AI MVP engineering partners",
+      "cards_found": 3,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "3 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-30T16:37:53.211255",
+      "query": "Omaha founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Tech founders seeking custom software and AI MVP engineering partners",
+      "cards_found": 1,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "1 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-30T16:38:01.993989",
+      "query": "Milwaukee founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Tech founders seeking custom software and AI MVP engineering partners",
+      "cards_found": 0,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "0 cards returned on LinkedIn (Zero results)"
+    },
+    {
+      "timestamp": "2026-10-30T16:38:22.345174",
+      "query": "YC founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Tech founders seeking custom software and AI MVP engineering partners",
+      "cards_found": 3,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "3 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-30T16:38:34.553744",
+      "query": "Raleigh founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Tech founders seeking custom software and AI MVP engineering partners",
+      "cards_found": 1,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "1 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-30T16:38:45.640597",
+      "query": "Cincinnati founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Tech founders seeking custom software and AI MVP engineering partners",
+      "cards_found": 3,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "3 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-30T16:38:56.075357",
+      "query": "Louisville founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Tech founders seeking custom software and AI MVP engineering partners",
+      "cards_found": 1,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "1 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-30T16:39:06.638830",
+      "query": "Jacksonville founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Tech founders seeking custom software and AI MVP engineering partners",
+      "cards_found": 1,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "1 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-30T16:39:25.615589",
+      "query": "Birmingham founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Tech founders seeking custom software and AI MVP engineering partners",
+      "cards_found": 1,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "1 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-30T16:39:45.245151",
+      "query": "South Park Commons founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Tech founders seeking custom software and AI MVP engineering partners",
+      "cards_found": 2,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "2 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-30T16:39:56.389696",
+      "query": "Pittsburgh founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Tech founders seeking custom software and AI MVP engineering partners",
+      "cards_found": 1,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "1 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-30T16:40:07.961029",
+      "query": "Cleveland founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Tech founders seeking custom software and AI MVP engineering partners",
+      "cards_found": 2,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "2 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-30T16:40:18.784800",
+      "query": "Cincinnati founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Tech founders seeking custom software and AI MVP engineering partners",
+      "cards_found": 3,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "3 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-30T16:40:31.102613",
+      "query": "Cincinnati founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Tech founders seeking custom software and AI MVP engineering partners",
+      "cards_found": 3,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "3 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-30T16:40:43.569097",
+      "query": "Cincinnati founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Tech founders seeking custom software and AI MVP engineering partners",
+      "cards_found": 3,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "3 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-30T16:40:55.436321",
+      "query": "Cincinnati founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Tech founders seeking custom software and AI MVP engineering partners",
+      "cards_found": 3,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "3 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-30T16:41:06.991440",
+      "query": "Cincinnati founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Tech founders seeking custom software and AI MVP engineering partners",
+      "cards_found": 3,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "3 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-30T16:41:19.129075",
+      "query": "Cincinnati founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Tech founders seeking custom software and AI MVP engineering partners",
+      "cards_found": 3,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "3 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-30T16:41:32.021866",
+      "query": "Cincinnati founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Tech founders seeking custom software and AI MVP engineering partners",
+      "cards_found": 3,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "3 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-30T16:41:42.801374",
+      "query": "Cincinnati founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Tech founders seeking custom software and AI MVP engineering partners",
+      "cards_found": 3,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "3 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-30T16:41:54.031693",
+      "query": "Cincinnati founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Tech founders seeking custom software and AI MVP engineering partners",
+      "cards_found": 3,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "3 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-30T16:42:04.804054",
+      "query": "Cincinnati founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Tech founders seeking custom software and AI MVP engineering partners",
+      "cards_found": 3,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "3 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-30T16:42:16.112047",
+      "query": "Cincinnati founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Tech founders seeking custom software and AI MVP engineering partners",
+      "cards_found": 3,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "3 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-30T16:42:27.506546",
+      "query": "Cincinnati founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Tech founders seeking custom software and AI MVP engineering partners",
+      "cards_found": 3,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "3 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-30T16:42:39.387686",
+      "query": "Cincinnati founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Tech founders seeking custom software and AI MVP engineering partners",
+      "cards_found": 3,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "3 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-30T16:42:52.126240",
+      "query": "Cincinnati founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Tech founders seeking custom software and AI MVP engineering partners",
+      "cards_found": 3,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "3 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-10-30T16:42:57.825673",
+      "query": "Cincinnati founding engineer",
+      "freshness": "past-week",
+      "target_objective": "Tech founders seeking custom software and AI MVP engineering partners",
+      "cards_found": 3,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "3 cards inspected, 0 passed full USA founder qualification"
     }
   ],
   "user_feedback_history": [
@@ -1393,5 +1903,5 @@
       "fit_score": 70
     }
   ],
-  "last_updated": "2026-10-30T10:19:54.668949"
+  "last_updated": "2026-10-30T16:42:57.825678"
 }

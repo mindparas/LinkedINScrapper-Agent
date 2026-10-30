@@ -1,109 +1,109 @@
 {
-  "generated_at": "2026-10-30T10:19:54.670471",
-  "target_limit": 1,
+  "generated_at": "2026-10-30T16:42:57.826700",
+  "target_limit": 5,
   "qualified_leads_count": 1,
-  "skipped_cards_count": 5,
-  "total_turns": 15,
+  "skipped_cards_count": 0,
+  "total_turns": 106,
   "recent_executions": [
     {
-      "timestamp": "2026-10-30T10:10:15.153755",
-      "query": "Denver founding engineer",
+      "timestamp": "2026-10-30T16:41:19.129075",
+      "query": "Cincinnati founding engineer",
       "freshness": "past-week",
-      "target_objective": "Genuine decision-makers (Founders, CTOs) in tech startups seeking custom software or AI MVP engineering services.",
-      "cards_found": 9,
+      "target_objective": "Tech founders seeking custom software and AI MVP engineering partners",
+      "cards_found": 3,
       "qualified_count": 0,
       "developer_guidance": "",
-      "outcome": "9 cards inspected, 0 passed full USA founder qualification"
+      "outcome": "3 cards inspected, 0 passed full USA founder qualification"
     },
     {
-      "timestamp": "2026-10-30T10:10:33.682500",
-      "query": "looking for dev shop",
+      "timestamp": "2026-10-30T16:41:32.021866",
+      "query": "Cincinnati founding engineer",
       "freshness": "past-week",
-      "target_objective": "Genuine decision-makers (Founders, CTOs) in tech startups seeking custom software or AI MVP engineering services.",
-      "cards_found": 6,
+      "target_objective": "Tech founders seeking custom software and AI MVP engineering partners",
+      "cards_found": 3,
       "qualified_count": 0,
       "developer_guidance": "",
-      "outcome": "6 cards inspected, 0 passed full USA founder qualification"
+      "outcome": "3 cards inspected, 0 passed full USA founder qualification"
     },
     {
-      "timestamp": "2026-10-30T10:10:51.916853",
-      "query": "Los Angeles founding engineer",
+      "timestamp": "2026-10-30T16:41:42.801374",
+      "query": "Cincinnati founding engineer",
       "freshness": "past-week",
-      "target_objective": "Genuine decision-makers (Founders, CTOs) in tech startups seeking custom software or AI MVP engineering services.",
-      "cards_found": 9,
+      "target_objective": "Tech founders seeking custom software and AI MVP engineering partners",
+      "cards_found": 3,
       "qualified_count": 0,
       "developer_guidance": "",
-      "outcome": "9 cards inspected, 0 passed full USA founder qualification"
+      "outcome": "3 cards inspected, 0 passed full USA founder qualification"
     },
     {
-      "timestamp": "2026-10-30T10:11:05.060380",
-      "query": "Techstars founding engineer",
+      "timestamp": "2026-10-30T16:41:54.031693",
+      "query": "Cincinnati founding engineer",
       "freshness": "past-week",
-      "target_objective": "Genuine decision-makers (Founders, CTOs) in tech startups seeking custom software or AI MVP engineering services.",
-      "cards_found": 0,
+      "target_objective": "Tech founders seeking custom software and AI MVP engineering partners",
+      "cards_found": 3,
       "qualified_count": 0,
       "developer_guidance": "",
-      "outcome": "0 cards returned on LinkedIn (Zero results)"
+      "outcome": "3 cards inspected, 0 passed full USA founder qualification"
     },
     {
-      "timestamp": "2026-10-30T10:11:22.733918",
-      "query": "hiring first engineer startup",
+      "timestamp": "2026-10-30T16:42:04.804054",
+      "query": "Cincinnati founding engineer",
       "freshness": "past-week",
-      "target_objective": "Genuine decision-makers (Founders, CTOs) in tech startups seeking custom software or AI MVP engineering services.",
-      "cards_found": 6,
+      "target_objective": "Tech founders seeking custom software and AI MVP engineering partners",
+      "cards_found": 3,
       "qualified_count": 0,
       "developer_guidance": "",
-      "outcome": "6 cards inspected, 0 passed full USA founder qualification"
+      "outcome": "3 cards inspected, 0 passed full USA founder qualification"
     },
     {
-      "timestamp": "2026-10-30T10:11:39.975151",
-      "query": "San Francisco hiring founding engineer",
+      "timestamp": "2026-10-30T16:42:16.112047",
+      "query": "Cincinnati founding engineer",
       "freshness": "past-week",
-      "target_objective": "Genuine decision-makers (Founders, CTOs) in tech startups seeking custom software or AI MVP engineering services.",
-      "cards_found": 6,
+      "target_objective": "Tech founders seeking custom software and AI MVP engineering partners",
+      "cards_found": 3,
       "qualified_count": 0,
       "developer_guidance": "",
-      "outcome": "6 cards inspected, 0 passed full USA founder qualification"
+      "outcome": "3 cards inspected, 0 passed full USA founder qualification"
     },
     {
-      "timestamp": "2026-10-30T10:12:10.664838",
-      "query": "San Francisco building MVP",
+      "timestamp": "2026-10-30T16:42:27.506546",
+      "query": "Cincinnati founding engineer",
       "freshness": "past-week",
-      "target_objective": "Genuine decision-makers (Founders, CTOs) in tech startups seeking custom software or AI MVP engineering services.",
-      "cards_found": 6,
+      "target_objective": "Tech founders seeking custom software and AI MVP engineering partners",
+      "cards_found": 3,
       "qualified_count": 0,
       "developer_guidance": "",
-      "outcome": "6 cards inspected, 0 passed full USA founder qualification"
+      "outcome": "3 cards inspected, 0 passed full USA founder qualification"
     },
     {
-      "timestamp": "2026-10-30T10:12:16.937093",
-      "query": "San Francisco seeking engineer",
+      "timestamp": "2026-10-30T16:42:39.387686",
+      "query": "Cincinnati founding engineer",
       "freshness": "past-week",
-      "target_objective": "Genuine decision-makers (Founders, CTOs) in tech startups seeking custom software or AI MVP engineering services.",
-      "cards_found": 9,
+      "target_objective": "Tech founders seeking custom software and AI MVP engineering partners",
+      "cards_found": 3,
       "qualified_count": 0,
       "developer_guidance": "",
-      "outcome": "9 cards inspected, 0 passed full USA founder qualification"
+      "outcome": "3 cards inspected, 0 passed full USA founder qualification"
     },
     {
-      "timestamp": "2026-10-30T10:18:58.138919",
-      "query": "San Francisco founding engineer",
+      "timestamp": "2026-10-30T16:42:52.126240",
+      "query": "Cincinnati founding engineer",
       "freshness": "past-week",
-      "target_objective": "Genuine decision-makers (Founders, CTOs) in tech startups seeking custom software or AI MVP engineering services.",
-      "cards_found": 9,
+      "target_objective": "Tech founders seeking custom software and AI MVP engineering partners",
+      "cards_found": 3,
       "qualified_count": 0,
       "developer_guidance": "",
-      "outcome": "9 cards inspected, 0 passed full USA founder qualification"
+      "outcome": "3 cards inspected, 0 passed full USA founder qualification"
     },
     {
-      "timestamp": "2026-10-30T10:19:54.668943",
-      "query": "Austin founding engineer",
+      "timestamp": "2026-10-30T16:42:57.825673",
+      "query": "Cincinnati founding engineer",
       "freshness": "past-week",
-      "target_objective": "Genuine decision-makers (Founders, CTOs) in tech startups seeking custom software or AI MVP engineering services.",
-      "cards_found": 6,
-      "qualified_count": 1,
+      "target_objective": "Tech founders seeking custom software and AI MVP engineering partners",
+      "cards_found": 3,
+      "qualified_count": 0,
       "developer_guidance": "",
-      "outcome": "1 genuine lead(s) qualified"
+      "outcome": "3 cards inspected, 0 passed full USA founder qualification"
     }
   ]
 }
