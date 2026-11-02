@@ -112,6 +112,9 @@ class LinkedInAgentTools:
             query=q, freshness=self.current_freshness,
             cards_found=self.cards_on_current_query, qualified_count=self.qualified_on_current_query,
         )
+        self.planner.record_feed_feedback(
+            query=q, total_cards=self.posts_judged_on_query, categories=self.categories_on_query
+        )
         self.query_log.append({
             "query": q, "level": level, "posts": self.posts_judged_on_query,
             "buyers": self.buyers_on_query, "us_buyers": self.us_buyers_on_query,
@@ -132,7 +135,9 @@ class LinkedInAgentTools:
         if self.current_query:
             lines.append(f"CURRENT QUERY: '{self.current_query}' (L{self.planner.level_of(self.current_query)}), "
                          f"{self.posts_judged_on_query} posts judged so far, {self.buyers_on_query} buyers.")
-        lines.append(f"SUGGESTED NEXT QUERY (from stored results): '{self.get_next_recommended_query()}'")
+        lines.append(f"🧠 STRATEGIC COGNITION & LEARNED FEEDBACK:\n  {self.planner.last_learned_lesson}")
+        lines.append(f"ACTIVE STRATEGIC PATTERN: '{self.planner.current_archetype}' (Keep queries natural to 2-3 words. Never combine city + industry + intent).")
+        lines.append(f"SUGGESTED NEXT QUERY (from planner): '{self.get_next_recommended_query()}'")
         return "\n".join(lines)
 
     def _log_card(self, card, verdict):
@@ -203,21 +208,15 @@ class LinkedInAgentTools:
             self.halt_reason = "Daily search limit reached (account-safety budget)"
             return {"status": "halted", "observation": f"HALTED: {self.halt_reason}. Call finish_campaign."}
         clean_q = clean_linkedin_boolean_query(query)
+        # Ensure query is non-empty and has substance
+        if not clean_q or len(clean_q.strip()) < 2:
+            clean_q = self.get_next_recommended_query()
+
+        # Prevent duplicate re-execution in the same session by autonomously selecting a fresh unexecuted angle
         if clean_q.lower() in self.executed_queries:
-            next_rec = self.get_next_recommended_query()
-            return {
-                "status": "query_rejected",
-                "observation": f"Query '{clean_q}' was already executed in this session. Run a different one, e.g. '{next_rec}'."
-            }
-        if not self.planner.is_acceptable_query(clean_q):
-            next_rec = self.get_next_recommended_query()
-            return {
-                "status": "query_rejected",
-                "observation": (
-                    f"Query '{clean_q}' has no US anchor (tech hub/accelerator) and no buyer-intent phrase, so it returns recruiters and job seekers. "
-                    f"Use a buyer-intent query such as '{next_rec}'."
-                )
-            }
+            fresh_q = self.get_next_recommended_query()
+            print(f"\n{Style.YELLOW}⚠️ Notice: Query '{clean_q}' was already tested in this session. Autonomously executing fresh angle: '{fresh_q}'{Style.RESET}")
+            clean_q = fresh_q
 
         self._finalize_query()
 
@@ -275,29 +274,52 @@ class LinkedInAgentTools:
                 )
             }
 
-        self.logger.info(f"Agent executing search: '{clean_q}' | Freshness: {self.current_freshness} | Objective: {target_objective} | Rationale: {query_rationale}")
+        self.logger.info(f"Agent executing search: '{clean_q}' | Objective: {target_objective} | Rationale: {query_rationale}")
         self.usage.record("searches")
-        time.sleep(random.uniform(3.0, 6.0))  # human-like pacing between searches
-        has_no_results, visible_cards = self._load_search(clean_q, self.current_freshness)
+        time.sleep(random.uniform(2.5, 4.5))  # human-like pacing between searches
+
+        # Dual-Timeframe Strategy:
+        # Check 'past-24h' first to catch breaking fresh leads.
+        # If past-24h has fewer than 3 posts (or 0), seamlessly check 'past-week'
+        # so the agent always inspects both 24h and weekly posts for every query.
+        freshness_used = "past-24h"
+        has_no_results, visible_cards = self._load_search(clean_q, "past-24h")
         if self._safety_halt():
             return {"status": "halted", "observation": f"HALTED: {self.halt_reason}. Call finish_campaign."}
-        if (has_no_results or visible_cards == 0) and self.current_freshness == "past-24h":
-            self.logger.info("No results for past-24h; falling back to past-week.")
-            self.current_freshness = "past-week"
-            has_no_results, visible_cards = self._load_search(clean_q, self.current_freshness)
+
+        # If 24h had few or no results, check past-week
+        if has_no_results or visible_cards < 3:
+            self.logger.info(f"Only {visible_cards} cards in past-24h for '{clean_q}'. Automatically checking past-week for broader coverage.")
+            has_no_results_wk, visible_cards_wk = self._load_search(clean_q, "past-week")
+            if visible_cards_wk > visible_cards:
+                has_no_results = has_no_results_wk
+                visible_cards = visible_cards_wk
+                freshness_used = "past-week"
+            elif visible_cards > 0:
+                freshness_used = "past-24h"
+            else:
+                has_no_results = True
+                visible_cards = 0
+                freshness_used = "both 24h & past-week evaluated"
+
+        self.current_freshness = freshness_used
         self.cards_on_current_query = visible_cards
         self.last_dom_card_count = visible_cards
 
         if has_no_results or visible_cards == 0:
+            self.planner.record_zero_yield(clean_q)
+            self.planner.record_feed_feedback(clean_q, 0, {})
+            next_pattern = self.planner.current_archetype
             next_rec = self.get_next_recommended_query()
             obs = (
-                f"0 results found on LinkedIn for '{clean_q}' (Freshness: {self.current_freshness}). "
-                f"Page displays 'No results found'. DO NOT SCROLL on this page! "
-                f"Recommended next move: Switch to 'past-week' freshness or execute proven US query: '{next_rec}'."
+                f"0 results found on LinkedIn across BOTH 'past-24h' and 'past-week' for '{clean_q}'. "
+                f"Page displays 'No results found'. DO NOT SCROLL on this page. "
+                f"Pattern automatically shifted to '{next_pattern}'. Recommended next move: execute query '{next_rec}'."
             )
             status = "zero_results"
         else:
-            obs = f"Search successfully returned results for '{clean_q}' (Freshness: {self.current_freshness}). Found {visible_cards} post cards visible. Call scan_and_read_cards to inspect them."
+            self.planner.record_positive_yield(clean_q)
+            obs = f"Search successfully returned results for '{clean_q}' (Dual-timeframe evaluated; showing {freshness_used}). Found {visible_cards} post cards visible. Call scan_and_read_cards to inspect them."
             status = "success"
 
         return {

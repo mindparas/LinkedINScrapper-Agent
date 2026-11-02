@@ -14,12 +14,12 @@ AGENT_TOOLS = [
                 "properties": {
                     "query": {
                         "type": "string",
-                        "description": "Unquoted natural search query. MUST contain a buyer-intent phrase (e.g. 'looking for dev shop', 'need software agency', 'building our MVP', 'fractional CTO needed', 'looking for technical co-founder') and/or a US tech hub or accelerator ('Austin looking for dev shop', 'YC building our MVP'). Bare job-title queries like 'founding engineer' and repeated queries are rejected. NEVER put 'United States' or 'USA' in the query."
+                        "description": "Unquoted natural search query (2-3 words). Use authentic founder vernacular (e.g. 'building our MVP', 'hiring founding engineer', 'recommend a dev shop', 'looking for technical cofounder') or anchor to ONE US tech hub/accelerator (e.g. 'Austin building our MVP', 'NYC hiring founding engineer'). NEVER combine 3+ constraints (no 'city + niche + intent' like 'Pear VC fintech looking for dev shop'). NEVER put 'United States' or 'USA' in the query."
                     },
                     "freshness": {
                         "type": "string",
                         "enum": ["past-24h", "past-week"],
-                        "description": "Freshness window ('past-24h' or 'past-week'). Start with 'past-24h'; the tool automatically falls back to 'past-week' if there are no fresh results."
+                        "description": "Target freshness window. Note that the search tool automatically checks BOTH 'past-24h' and 'past-week' to maximize lead recall."
                     },
                     "target_objective": {
                         "type": "string",

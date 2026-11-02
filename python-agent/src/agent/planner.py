@@ -11,6 +11,7 @@ class StrategicQueryPlanner:
     active US tech founders, startup executives, and MVP builders.
     """
     
+    # High-intent US tech hubs and premier accelerators
     HIGH_YIELD_US_TECH_HUBS = [
         "San Francisco",
         "Bay Area",
@@ -26,57 +27,111 @@ class StrategicQueryPlanner:
     
     TOP_US_ACCELERATORS = [
         "YC",
-        "Techstars",
-        "South Park Commons",
-        "Pear VC",
-        "AI Grant"
+        "Techstars"
     ]
-    
-    CORE_BUYING_ANGLES = [
-        "founding engineer",
-        "hiring first engineer",
-        "building our MVP",
-        "building MVP custom software",
-        "looking for dev shop",
-        "need software agency",
-        "fractional CTO",
-        "building in stealth",
-        "hiring full stack engineer",
-        "hiring AI engineer"
-    ]
+
+    # Strategic Founder Archetypes: Real vernacular used by US startup founders
+    ARCHETYPES = {
+        "mvp_build": [
+            "building our MVP",
+            "building an MVP",
+            "building our v1",
+            "stealth startup building",
+            "building in stealth",
+            "building our mobile app"
+        ],
+        "founding_engineer": [
+            "hiring founding engineer",
+            "hiring our first engineer",
+            "looking for technical cofounder",
+            "seeking technical co-founder",
+            "fractional CTO needed"
+        ],
+        "agency_search": [
+            "looking for dev shop",
+            "recommend a dev shop",
+            "recommend software agency",
+            "need software agency",
+            "dev shop recommendations"
+        ],
+        "contract_dev": [
+            "looking for contract developers",
+            "contract engineer needed",
+            "looking for contract software engineer"
+        ]
+    }
 
     BUYER_INTENT_TERMS = [
         "mvp", "dev shop", "software agency", "development partner", "fractional cto",
-        "technical co-founder", "technical cofounder", "outsourc", "need an engineer",
-        "need a developer", "need developers", "looking for developer", "build our app",
-        "build my app", "hiring first engineer",
+        "technical co-founder", "technical cofounder", "founding engineer", "first engineer",
+        "building our", "building an", "stealth startup", "contract developers", "contract engineer"
     ]
 
-    # Ladder: L1 simple intent phrase -> L2 + US hub/accelerator -> L3 + industry/stack modifier
-    INTENTS = [
-        "need an MVP built", "looking for dev shop", "need software agency", "looking for developers",
-        "need a technical co-founder", "outsourcing development", "fractional CTO needed",
-    ]
-    MODIFIERS = ["AI startup", "fintech", "healthtech", "SaaS", "mobile app", "marketplace"]
     RECENT_DAYS = 3          # a query run within this window is not repeated
-    MAX_L1_PER_WINDOW = 3    # simple unanchored queries return worldwide authors, so use few
-    L2_RUNS_BEFORE_L3 = 4    # escalate to L3 once L2 has had a fair try with no buyers
 
     def __init__(self, niche: str = "custom software & AI MVP engineering", memory=None):
         self.niche = niche
         self.memory = memory
         self.executed_queries: List[Dict[str, Any]] = []
+        self.archetype_order = ["mvp_build", "founding_engineer", "agency_search", "contract_dev"]
+        self.current_archetype_idx = 0
+        self.consecutive_zero_yield_count = 0
+        self.last_learned_lesson = "Start with high-intent founder vernacular ('building our MVP', 'hiring founding engineer')."
 
-    # ── helpers ─────────────────────────────────────────────────────────
     @property
     def _anchors(self) -> List[str]:
         return self.HIGH_YIELD_US_TECH_HUBS + self.TOP_US_ACCELERATORS
+
+    @property
+    def current_archetype(self) -> str:
+        return self.archetype_order[self.current_archetype_idx % len(self.archetype_order)]
+
+    def shift_pattern(self, reason: str = "") -> str:
+        """Actively pivots the search brain to the next distinct archetype when results are dry."""
+        self.current_archetype_idx = (self.current_archetype_idx + 1) % len(self.archetype_order)
+        self.consecutive_zero_yield_count = 0
+        new_pattern = self.current_archetype
+        return new_pattern
+
+    def record_zero_yield(self, query: str):
+        """Called when a query yields 0 results across both 24h and past-week."""
+        self.consecutive_zero_yield_count += 1
+        # Shift pattern immediately if 2 consecutive queries return 0
+        if self.consecutive_zero_yield_count >= 2:
+            self.shift_pattern(f"Consecutive zero results on query '{query}'")
+
+    def record_positive_yield(self, query: str):
+        """Reset zero-yield counter when a query succeeds."""
+        self.consecutive_zero_yield_count = 0
+
+    def record_feed_feedback(self, query: str, total_cards: int, categories: Dict[str, int]) -> str:
+        """
+        Synthesizes an empirical lesson from the query's feed results to teach the agent
+        how to adapt its next query.
+        """
+        if total_cards == 0:
+            lesson = f"Query '{query}' produced 0 results across 24h & week. Reason: phrasing was too narrow on LinkedIn. Action: Shift to a broader core intent."
+            self.record_zero_yield(query)
+        elif categories.get("RECRUITER", 0) >= max(2, int(total_cards * 0.4)):
+            lesson = f"Query '{query}' was contaminated by recruiters/staffing agencies ({categories.get('RECRUITER', 0)} cards). Action: Avoid generic hiring terms; use founder-first vernacular like 'building our MVP' or 'recommend a dev shop'."
+            self.shift_pattern("Recruiter contamination")
+        elif categories.get("SELLER", 0) >= max(2, int(total_cards * 0.4)):
+            lesson = f"Query '{query}' attracted competitor dev shops/sellers ({categories.get('SELLER', 0)} cards). Action: Switch to buyer-side phrasing like 'recommend a dev shop' or 'looking for technical cofounder'."
+            self.shift_pattern("Seller contamination")
+        elif categories.get("BUYER", 0) > 0:
+            lesson = f"Query '{query}' successfully identified genuine buyers! Action: Exploit this winning semantic pattern across other US tech hubs."
+            self.record_positive_yield(query)
+        else:
+            lesson = f"Query '{query}' produced cards with low commercial buying intent. Action: Rotate to an adjacent founder archetype."
+
+        self.last_learned_lesson = lesson
+        return lesson
 
     def level_of(self, query: str) -> int:
         q = (query or "").lower()
         if not any(a.lower() in q for a in self._anchors):
             return 1
-        return 3 if any(m.lower() in q for m in self.MODIFIERS) else 2
+        return 2  # Max constraint depth is strictly Level 2 (Hub + Intent). Level 3 is banned.
 
     def _stats(self) -> Dict[str, Any]:
         return self.memory.query_stats() if self.memory else {}
@@ -88,57 +143,67 @@ class StrategicQueryPlanner:
         except (KeyError, TypeError, ValueError):
             return False
 
-    def _component_scores(self) -> Dict[str, float]:
-        """(buyers+1)/(posts+4) per component (intent/hub/modifier) across all past queries."""
-        agg: Dict[str, List[int]] = {}
-        comps = self.INTENTS + self._anchors + self.MODIFIERS
-        for q, st in self._stats().items():
-            for c in comps:
-                if c.lower() in q:
-                    a = agg.setdefault(c.lower(), [0, 0])
-                    a[0] += st.get("buyers", 0)
-                    a[1] += st.get("posts", 0)
-        return {c: (b + 1) / (p + 4) for c, (b, p) in agg.items()}
-
-    def _score(self, query: str, comp: Dict[str, float]) -> float:
-        q = query.lower()
-        prior = 0.25
-        return sum(comp.get(c.lower(), prior) for c in self.INTENTS + self._anchors + self.MODIFIERS if c.lower() in q)
-
-    def _candidates(self, level: int) -> List[str]:
-        if level == 1:
-            return list(self.INTENTS)
-        if level == 2:
-            return [f"{h} {i}" for h in self._anchors for i in self.INTENTS]
-        return [f"{h} {m} {i}" for h in self._anchors for m in self.MODIFIERS for i in self.INTENTS]
-
     def is_acceptable_query(self, query: str) -> bool:
-        """A query must carry a US anchor (hub/accelerator) or a buyer-intent phrase; bare job-title queries are recruiter bait."""
-        q = (query or "").lower()
-        return any(a.lower() in q for a in self._anchors) or any(t in q for t in self.BUYER_INTENT_TERMS)
+        """
+        Validates query sanity:
+        Ensures query is non-empty and has meaningful substance.
+        Allows the autonomous agent full freedom to explore natural founder expressions.
+        """
+        if not query or not isinstance(query, str):
+            return False
+        return len(query.strip()) >= 2
 
-    def choose_level(self) -> int:
-        stats = self._stats()
-        recent = {q: st for q, st in stats.items() if self._recent(st)}
-        l1_recent = sum(1 for q in recent if self.level_of(q) == 1)
-        if l1_recent < self.MAX_L1_PER_WINDOW:
-            return 1
-        l2 = [st for q, st in recent.items() if self.level_of(q) == 2]
-        if len(l2) >= self.L2_RUNS_BEFORE_L3 and sum(st.get("buyers", 0) for st in l2) == 0:
-            return 3
-        return 2
+    def _generate_candidate_queries(self) -> List[str]:
+        """Generates candidates prioritizing the active archetype and rotating hubs."""
+        active_terms = self.ARCHETYPES[self.current_archetype]
+        candidates = []
+        
+        # 1. Unanchored core intent phrases (Level 1)
+        candidates.extend(active_terms)
+
+        # 2. Tech-hub / Accelerator anchored phrases (Level 2)
+        for anchor in self._anchors:
+            for term in active_terms[:3]:
+                candidates.append(f"{anchor} {term}")
+
+        # 3. Secondary fallback: include top terms from other archetypes as alternative options
+        for arch_name, terms in self.ARCHETYPES.items():
+            if arch_name != self.current_archetype:
+                candidates.extend(terms[:2])
+                for anchor in self.HIGH_YIELD_US_TECH_HUBS[:3]:
+                    candidates.append(f"{anchor} {terms[0]}")
+
+        return candidates
 
     def get_next_recommended_query(self, already_executed: Optional[set] = None) -> str:
-        done = set(already_executed or set()) | {q["query"] for q in self.executed_queries}
+        done = {q.lower().strip() for q in (already_executed or set())} | {q["query"].lower().strip() for q in self.executed_queries}
         stats = self._stats()
-        skip = done | {q for q, st in stats.items() if self._recent(st)}
-        comp = self._component_scores()
-        start = self.choose_level()
-        for level in (start, 2, 3, 1):
-            fresh = [c for c in self._candidates(level) if c.lower() not in skip]
-            if fresh:
-                return max(fresh, key=lambda c: (self._score(c, comp), -len(c)))
-        return self.INTENTS[0]
+        skip = done | {q.lower().strip() for q, st in stats.items() if self._recent(st)}
+        
+        candidates = self._generate_candidate_queries()
+        fresh = [c for c in candidates if c.lower().strip() not in skip and c.lower().strip() not in done]
+        
+        if fresh:
+            return fresh[0]
+            
+        # Cycle through all archetypes looking for unexecuted candidates
+        for arch_name in self.archetype_order:
+            for term in self.ARCHETYPES[arch_name]:
+                if term.lower().strip() not in done:
+                    return term
+                for anchor in self.HIGH_YIELD_US_TECH_HUBS:
+                    combo = f"{anchor} {term}"
+                    if combo.lower().strip() not in done:
+                        return combo
+
+        # Last resort fallback: dynamic hub combos guaranteed to never collide
+        for hub in ["San Francisco", "Austin", "New York", "Seattle", "Chicago", "Denver", "Boston", "Silicon Valley"]:
+            for action in ["building MVP", "seeking technical co-founder", "hiring founding engineer", "looking for dev shop"]:
+                combo = f"{hub} {action}"
+                if combo.lower().strip() not in done:
+                    return combo
+
+        return "San Francisco building our MVP"
 
     def record_query_execution(self, query: str, freshness: str, cards_found: int, qualified_count: int):
         self.executed_queries.append({
@@ -147,23 +212,28 @@ class StrategicQueryPlanner:
             "cards_found": cards_found,
             "qualified_count": qualified_count
         })
+        if cards_found > 0:
+            self.record_positive_yield(query)
+        else:
+            self.record_zero_yield(query)
 
     def diagnose_feed_outcome(self, cards_count: int, consecutive_empty_scrolls: int, consecutive_non_usa: int) -> Dict[str, Any]:
         """
         Diagnoses feed health and provides actionable strategic next moves.
         """
         if cards_count == 0:
+            next_pattern = self.shift_pattern("0 cards found on feed")
             return {
                 "action": "switch_query_or_freshness",
-                "diagnosis": "0 cards found on LinkedIn. The query syntax may be too restrictive or has no matches in this timeframe.",
-                "recommendation": "Switch freshness from past-24h to past-week, or switch to a high-yield US Tech Hub (e.g. 'Austin looking for dev shop')."
+                "diagnosis": "0 cards found across both 24h and weekly timeframes. The query syntax may be too restrictive or has no matches in this timeframe.",
+                "recommendation": f"Pivoting strategy: switched archetype to '{next_pattern}'. Recommended query: '{self.get_next_recommended_query()}'."
             }
             
         if consecutive_non_usa >= 2:
             return {
                 "action": "bailout_feed",
                 "diagnosis": f"Feed contaminated with {consecutive_non_usa} consecutive international non-US profiles.",
-                "recommendation": "Stop scrolling this feed immediately. Execute a search anchored strictly to a US city (e.g., 'Seattle need software agency')."
+                "recommendation": "Stop scrolling this feed immediately. Execute a search anchored strictly to a US city (e.g., 'San Francisco building our MVP')."
             }
             
         if consecutive_empty_scrolls >= 2:
@@ -178,4 +248,5 @@ class StrategicQueryPlanner:
             "diagnosis": "Feed is healthy with active post cards.",
             "recommendation": "Scan cards, evaluate decision-makers, and qualify genuine leads."
         }
+
 

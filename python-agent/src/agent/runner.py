@@ -32,16 +32,17 @@ def run_autonomous_agent(driver, niche, target_limit, exporter, memory, logger, 
         active_developer_directives=active_developer_directives
     )
 
-    # Dynamic US Time Context (DST-aware)
-    now_utc = datetime.now(timezone.utc)
-    est_hour = now_utc.astimezone(ZoneInfo("America/New_York")).hour
-    pst_hour = now_utc.astimezone(ZoneInfo("America/Los_Angeles")).hour
+    # Dynamic US Time Context (DST-aware with Windows fallback)
+    try:
+        from zoneinfo import ZoneInfo
+        now_utc = datetime.now(timezone.utc)
+        est_hour = now_utc.astimezone(ZoneInfo("America/New_York")).hour
+        pst_hour = now_utc.astimezone(ZoneInfo("America/Los_Angeles")).hour
+    except Exception:
+        now_utc = datetime.now(timezone.utc)
+        est_hour = (now_utc.hour - 5) % 24
+        pst_hour = (now_utc.hour - 8) % 24
     is_us_night = (est_hour < 8 or est_hour >= 23)
-
-    us_time_guidance = (
-        f"- CURRENT US TIME: ~{est_hour:02d}:00 EST / ~{pst_hour:02d}:00 PST ({'NIGHT/OFFLINE in USA' if is_us_night else 'ACTIVE US BUSINESS HOURS'}).\n"
-        f"  * Start with 'past-24h'; the tool falls back to 'past-week' automatically when a query has no fresh results.\n\n"
-    )
 
     system_prompt = f"""You are an autonomous BDE lead-discovery agent for an Indian software/AI development agency ({niche}).
 GOAL: find {target_limit} US founders/CTOs/VPs who posted a CURRENT need for outside engineering help (MVP build, dev shop/agency, contractors, technical co-founder, engineering hires).
@@ -51,10 +52,14 @@ HOW YOU WORK
 - Search with execute_search, then scan_and_read_cards. Each card already carries a verdict from a dedicated lead judge and many are profile-verified. Code auto-rejects recruiters, agencies, job seekers and non-US authors; never re-evaluate those.
 - qualify_and_save_lead only for cards with judge.category BUYER (confidence >= 0.7) whose author is a decision maker; the tool enforces this. Use verify_profile_location only if a promising card has no verified_location.
 - skip_card only with a specific reason citing evidence.
-- Each turn you get a STATE block (queries tried and their yields, searches left, a suggested next query). Use it: keep what produced buyers, go more specific when a query is noisy, and prefer the suggested query unless the results give you a better idea. Start simple and add specifics (US hub or accelerator, then industry/stack) only as results call for it.
-- Queries: natural, unquoted, never "USA"/"United States". Repeats and queries without a US anchor or buyer-intent phrase are rejected by the tool.
-- Stop with finish_campaign only when {target_limit} leads are saved, or when told HALTED.
-- For every execute_search, briefly state target_objective, query_rationale and feasibility_analysis (one sentence each)."""
+
+QUERY STRATEGY & ADAPTIVE PATTERN SHIFTING
+- PROPER QUERY FORMULATION: Keep queries concise (2-3 words). Use authentic founder vernacular ('building our MVP', 'hiring founding engineer', 'recommend a dev shop', 'Austin building our MVP').
+- NEVER OVER-SPECIFY: NEVER combine 3+ constraints (e.g. NEVER search 'City + Niche + Intent' like 'Pear VC fintech looking for dev shop'—LinkedIn returns 0 results for over-constrained phrases). Maximum 2 components: [US Hub/Accelerator] + [Intent Phrase] or bare [Intent Phrase].
+- DUAL TIMEFRAME CHECKING: The search tool automatically inspects BOTH 'past-24h' and 'past-week' for every search. You do not need to worry about missing weekly posts.
+- BRAIN PATTERN SHIFTING: When a query yields 0 results across both timeframes, do NOT repeat that same failed phrase for other cities. Immediately shift your search pattern to a different archetype (e.g., pivot from agency search to MVP build, or from MVP build to founding engineer hiring) and prefer the planner's suggested query.
+- Queries must be natural and unquoted; never include 'USA' or 'United States'.
+- Stop with finish_campaign only when {target_limit} leads are saved, or when told HALTED."""
 
     starting_leads_count = len(exporter.leads)
     target_total_leads = starting_leads_count + target_limit

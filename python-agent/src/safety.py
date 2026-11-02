@@ -10,7 +10,7 @@ from datetime import date
 from src.config import BASE_DIR
 
 DAILY_LIMITS = {
-    "searches": int(os.environ.get("BDE_MAX_SEARCHES_PER_DAY", "40")),
+    "searches": int(os.environ.get("BDE_MAX_SEARCHES_PER_DAY", "75")),
     "profile_visits": int(os.environ.get("BDE_MAX_PROFILE_VISITS_PER_DAY", "60")),
 }
 
