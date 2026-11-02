@@ -22,6 +22,8 @@ from src.browser import (
 )
 from src.agent.planner import StrategicQueryPlanner
 from src.agent.evaluator import BDESalesIntelligenceSynthesizer
+from src.judge import LeadJudge
+from src.safety import UsageBudget, detect_checkpoint
 
 class LinkedInAgentTools:
     """
@@ -35,8 +37,17 @@ class LinkedInAgentTools:
         self.logger = logger
         self.evaluated_fingerprints = set()
         self.active_developer_directives = active_developer_directives if active_developer_directives is not None else []
-        self.planner = StrategicQueryPlanner()
+        self.planner = StrategicQueryPlanner(memory=memory)
         self.evaluator = BDESalesIntelligenceSynthesizer()
+        self.judge = LeadJudge(logger=logger)
+        self.usage = UsageBudget()
+        self.halt_reason = ""
+        self.judged_count = 0
+        self.posts_judged_on_query = 0
+        self.buyers_on_query = 0
+        self.us_buyers_on_query = 0
+        self.categories_on_query = {}
+        self.query_log = []  # compact per-query results for this session (feeds the state summary)
         
         # Pre-seed fingerprints strictly with THIS session's leads
         for l in self.exporter.leads:
@@ -79,6 +90,78 @@ class LinkedInAgentTools:
         t = " ".join((text or "").split())
         return f"post='{t[:limit]}{'…' if len(t) > limit else ''}'"
 
+    def _finalize_query(self):
+        """Persist what the current query produced (memory + planner + compact session log), once."""
+        if not self.current_query:
+            return
+        q = self.current_query
+        level = self.planner.level_of(q)
+        self.memory.record_query(
+            query=q,
+            freshness=self.current_freshness,
+            rationale=self.current_rationale,
+            expected_output=self.current_target_objective,
+            cards_count=self.cards_on_current_query,
+            qualified_count=self.qualified_on_current_query,
+        )
+        self.memory.record_query_stats(
+            q, level, self.posts_judged_on_query, self.buyers_on_query,
+            self.us_buyers_on_query, self.qualified_on_current_query,
+        )
+        self.planner.record_query_execution(
+            query=q, freshness=self.current_freshness,
+            cards_found=self.cards_on_current_query, qualified_count=self.qualified_on_current_query,
+        )
+        self.query_log.append({
+            "query": q, "level": level, "posts": self.posts_judged_on_query,
+            "buyers": self.buyers_on_query, "us_buyers": self.us_buyers_on_query,
+            "leads": self.qualified_on_current_query, "categories": dict(self.categories_on_query),
+        })
+        self.current_query = ""
+
+    def state_summary(self, leads_target, leads_now):
+        """Compact working memory handed to the model every turn instead of the full history."""
+        lines = [
+            f"LEADS: {leads_now}/{leads_target}. Searches left today: {self.usage.remaining('searches')}.",
+        ]
+        if self.query_log:
+            lines.append("QUERIES TRIED THIS RUN (level, posts judged, buyers, US buyers, leads, top categories):")
+            for e in self.query_log[-8:]:
+                cats = ", ".join(f"{k}:{v}" for k, v in sorted(e["categories"].items(), key=lambda kv: -kv[1])[:3])
+                lines.append(f"- L{e['level']} '{e['query']}': {e['posts']} posts, {e['buyers']} buyers, {e['us_buyers']} US, {e['leads']} leads [{cats}]")
+        if self.current_query:
+            lines.append(f"CURRENT QUERY: '{self.current_query}' (L{self.planner.level_of(self.current_query)}), "
+                         f"{self.posts_judged_on_query} posts judged so far, {self.buyers_on_query} buyers.")
+        lines.append(f"SUGGESTED NEXT QUERY (from stored results): '{self.get_next_recommended_query()}'")
+        return "\n".join(lines)
+
+    def _log_card(self, card, verdict):
+        """Append every post the agent sees to dataset/cards.jsonl (raw material for labeling/eval)."""
+        try:
+            path = os.path.join(BASE_DIR, "dataset", "cards.jsonl")
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            with open(path, "a", encoding="utf-8") as f:
+                f.write(json.dumps({
+                    "seen_at": time.strftime("%Y-%m-%dT%H:%M:%S"),
+                    "query": self.current_query,
+                    "author": card.get("author", ""),
+                    "headline": card.get("headline", ""),
+                    "author_url": card.get("author_url", ""),
+                    "content": card.get("content", ""),
+                    "judge": verdict,
+                }, ensure_ascii=False) + "\n")
+        except Exception:
+            pass
+
+    def _safety_halt(self):
+        """True (and sets halt_reason) when LinkedIn is challenging the session."""
+        reason = detect_checkpoint(self.driver)
+        if reason:
+            self.halt_reason = reason
+            self.logger.error(f"SAFETY HALT: {reason}")
+            return True
+        return False
+
     def _time_up(self):
         return self.deadline is not None and time.time() >= self.deadline
 
@@ -114,6 +197,11 @@ class LinkedInAgentTools:
         query_rationale = query_rationale or rationale
         target_objective = target_objective or expected_output
 
+        if self.halt_reason:
+            return {"status": "halted", "observation": f"HALTED: {self.halt_reason}. Call finish_campaign."}
+        if not self.usage.allow("searches"):
+            self.halt_reason = "Daily search limit reached (account-safety budget)"
+            return {"status": "halted", "observation": f"HALTED: {self.halt_reason}. Call finish_campaign."}
         clean_q = clean_linkedin_boolean_query(query)
         if clean_q.lower() in self.executed_queries:
             next_rec = self.get_next_recommended_query()
@@ -131,22 +219,7 @@ class LinkedInAgentTools:
                 )
             }
 
-        # Wrap up previous query stats in memory if exists
-        if self.current_query:
-            self.memory.record_query(
-                query=self.current_query,
-                freshness=self.current_freshness,
-                rationale=self.current_rationale,
-                expected_output=self.current_target_objective,
-                cards_count=self.cards_on_current_query,
-                qualified_count=self.qualified_on_current_query
-            )
-            self.planner.record_query_execution(
-                query=self.current_query,
-                freshness=self.current_freshness,
-                cards_found=self.cards_on_current_query,
-                qualified_count=self.qualified_on_current_query
-            )
+        self._finalize_query()
 
         self.scroll_count_on_query = 0
         self.cards_on_current_query = 0
@@ -155,6 +228,10 @@ class LinkedInAgentTools:
         self.consecutive_empty_scrolls = 0
         self.consecutive_zero_card_scans = 0
         self.last_dom_card_count = 0
+        self.posts_judged_on_query = 0
+        self.buyers_on_query = 0
+        self.us_buyers_on_query = 0
+        self.categories_on_query = {}
         self.current_query = clean_q
         self.executed_queries.add(clean_q.lower())
         self.current_freshness = freshness if freshness in ["past-24h", "past-week"] else "past-24h"
@@ -199,7 +276,11 @@ class LinkedInAgentTools:
             }
 
         self.logger.info(f"Agent executing search: '{clean_q}' | Freshness: {self.current_freshness} | Objective: {target_objective} | Rationale: {query_rationale}")
+        self.usage.record("searches")
+        time.sleep(random.uniform(3.0, 6.0))  # human-like pacing between searches
         has_no_results, visible_cards = self._load_search(clean_q, self.current_freshness)
+        if self._safety_halt():
+            return {"status": "halted", "observation": f"HALTED: {self.halt_reason}. Call finish_campaign."}
         if (has_no_results or visible_cards == 0) and self.current_freshness == "past-24h":
             self.logger.info("No results for past-24h; falling back to past-week.")
             self.current_freshness = "past-week"
@@ -265,10 +346,28 @@ class LinkedInAgentTools:
             is_auth, auth_hint = verify_bde_lead_authenticity(c.get("author", ""), c.get("headline", ""), "", c.get("company", ""), content)
             has_intent, intent_hint = verify_sales_buying_intent(content, c.get("headline", ""))
 
-            # Deterministic pre-filter: obvious recruiters/brokers, or no title AND no intent, never reach the LLM
+            # Cheap pre-filter: obvious recruiters/brokers never cost a judge call
             is_broker = (not is_auth) and "disqualified persona pattern" in auth_hint
-            if is_broker or (not is_auth and not has_intent):
+            verdict = None
+            if not is_broker:
+                verdict = self.judge.judge(c.get("author", ""), c.get("headline", ""), content)
+                self.judged_count += 1
+                self.posts_judged_on_query += 1
+                self.categories_on_query[verdict["category"]] = self.categories_on_query.get(verdict["category"], 0) + 1
+                if verdict["is_buyer"]:
+                    self.buyers_on_query += 1
+                c["judge"] = verdict
+                self._log_card(c, verdict)
+            judge_ok = verdict is not None and verdict["category"] != "ERROR"
+
+            if judge_ok:
+                # The judge is the primary gate; rules are only a fallback when it is unavailable
+                reject = not verdict["is_buyer"] and verdict["confidence"] >= 0.6
+                reason = f"Judge: {verdict['category']} ({verdict['confidence']:.2f}) {verdict['reasoning']}"
+            else:
+                reject = is_broker or (not is_auth and not has_intent)
                 reason = auth_hint if is_broker else f"{auth_hint}; {intent_hint}"
+            if reject:
                 self._register_skip(c.get("author", ""), c.get("author_url", ""))
                 self.skipped_count += 1
                 auto_skipped += 1
@@ -276,10 +375,16 @@ class LinkedInAgentTools:
                 self.logger.info(f"SKIPPED POST TEXT [auto] {c.get('author', 'Unknown')} | headline='{c.get('headline', '')[:100]}' | {self._excerpt(content)}")
                 continue
 
-            c["bde_authenticity_check"] = "PASS: Direct Founder/Exec" if is_auth else f"FLAGGED: {auth_hint}"
-            c["sales_intent_check"] = f"HIGH INTENT: {intent_hint}" if has_intent else f"LOW/NO INTENT: {intent_hint}"
-            c["buying_intent_signal"] = intent_hint if has_intent else "No commercial technical buying intent"
-            c["_passes_gates"] = bool(is_auth and has_intent)
+            if judge_ok:
+                c["bde_authenticity_check"] = f"JUDGE: decision_maker={verdict['author_is_decision_maker']}"
+                c["sales_intent_check"] = f"JUDGE: {verdict['category']} conf={verdict['confidence']:.2f} — {verdict['evidence_quote']}"
+                c["buying_intent_signal"] = verdict["need_summary"] or verdict["evidence_quote"] or "Judge-approved buying signal"
+                c["_passes_gates"] = LeadJudge.is_qualified(verdict, us_verified=True)  # profile visit decides location
+            else:
+                c["bde_authenticity_check"] = "PASS: Direct Founder/Exec" if is_auth else f"FLAGGED: {auth_hint}"
+                c["sales_intent_check"] = f"HIGH INTENT: {intent_hint}" if has_intent else f"LOW/NO INTENT: {intent_hint}"
+                c["buying_intent_signal"] = intent_hint if has_intent else "No commercial technical buying intent"
+                c["_passes_gates"] = bool(is_auth and has_intent)
             fresh.append(c)
 
         self.auto_skipped_count += auto_skipped
@@ -309,6 +414,8 @@ class LinkedInAgentTools:
                 res = self.verify_profile_location(author_url=c.get("author_url", ""))
                 c["verified_location"] = res.get("exact_location", "Unknown")
                 c["is_usa_verified"] = bool(res.get("is_usa_verified"))
+                if c["is_usa_verified"] and (c.get("judge") or {}).get("is_buyer"):
+                    self.us_buyers_on_query += 1
                 if not c["is_usa_verified"] and res.get("exact_location") not in ("Error inspecting profile", "Unknown"):
                     self._register_skip(c.get("author", ""), c.get("author_url", ""))
                     self.skipped_count += 1
@@ -363,6 +470,14 @@ class LinkedInAgentTools:
                 "observation": f"Invalid or missing profile URL: {author_url}"
             }
 
+        if self.halt_reason:
+            return {"author_url": author_url, "exact_location": "Unknown", "is_usa_verified": False,
+                    "observation": f"HALTED: {self.halt_reason}"}
+        if not self.usage.allow("profile_visits"):
+            self.halt_reason = "Daily profile-visit limit reached (account-safety budget)"
+            return {"author_url": author_url, "exact_location": "Unknown", "is_usa_verified": False,
+                    "observation": f"HALTED: {self.halt_reason}"}
+        self.usage.record("profile_visits")
         self.logger.info(f"Opening author profile in background tab to verify exact location: {author_url}")
         original_tab = self.driver.current_window_handle
         self.profile_visits += 1
@@ -458,6 +573,11 @@ class LinkedInAgentTools:
                 method: method
             };
             """
+            if self._safety_halt():
+                self.driver.close()
+                self.driver.switch_to.window(original_tab)
+                return {"author_url": author_url, "exact_location": "Unknown", "is_usa_verified": False,
+                        "observation": f"HALTED: {self.halt_reason}"}
             profile_info = self.driver.execute_script(extract_loc_script) or {}
             exact_location = profile_info.get("location", "").strip()
 
@@ -530,36 +650,48 @@ class LinkedInAgentTools:
         card_id = card.get("card_id", "")
         clean_profile_url = (profile_url or card.get("author_url", "")).strip()
 
-        # Strict Authenticity Guardrail
-        is_authentic, auth_reason = verify_bde_lead_authenticity(
-            author=author,
-            headline=headline,
-            role=role,
-            company=company,
-            post_content=card_content
-        )
-        if not is_authentic:
-            self.logger.warning(f"Rejected lead qualification for {author}: {auth_reason}")
-            print(f"      ⚠️ Disqualified Lead Candidate: '{author}' — Reason: {auth_reason}")
-            return {
-                "status": "lead_disqualified",
-                "author": author,
-                "rejection_reason": auth_reason,
-                "observation": f"Disqualified lead candidate '{author}'. Reason: {auth_reason}. Lead MUST be an authentic direct Founder/CTO/CEO/VP of their own tech startup, NOT a recruiter or broker."
-            }
+        judge = card.get("judge")
+        if judge and judge.get("category") != "ERROR":
+            # Judge-gated: only an evidence-backed, confident BUYER who is a decision maker is saved
+            if not LeadJudge.is_qualified(judge, us_verified=bool(card.get("is_usa_verified"))):
+                why = (f"Judge verdict {judge['category']} (confidence {judge['confidence']:.2f}, "
+                       f"decision_maker={judge['author_is_decision_maker']}, US={judge['us_signal']}): {judge['reasoning']}")
+                self.logger.warning(f"Rejected lead qualification for {author}: {why}")
+                print(f"      ⚠️ Disqualified Lead Candidate: '{author}' — {why}")
+                return {"status": "lead_disqualified", "author": author, "rejection_reason": why,
+                        "observation": f"Disqualified '{author}'. {why}"}
+            intent_signal = judge["need_summary"] or judge["evidence_quote"]
+        else:
+            # Strict Authenticity Guardrail
+            is_authentic, auth_reason = verify_bde_lead_authenticity(
+                author=author,
+                headline=headline,
+                role=role,
+                company=company,
+                post_content=card_content
+            )
+            if not is_authentic:
+                self.logger.warning(f"Rejected lead qualification for {author}: {auth_reason}")
+                print(f"      ⚠️ Disqualified Lead Candidate: '{author}' — Reason: {auth_reason}")
+                return {
+                    "status": "lead_disqualified",
+                    "author": author,
+                    "rejection_reason": auth_reason,
+                    "observation": f"Disqualified lead candidate '{author}'. Reason: {auth_reason}. Lead MUST be an authentic direct Founder/CTO/CEO/VP of their own tech startup, NOT a recruiter or broker."
+                }
 
-        # Strict B2B Sales Intent Filter
-        has_intent, auto_intent_signal = verify_sales_buying_intent(card_content or reasoning, headline)
-        if not has_intent:
-            self.logger.warning(f"Rejected lead qualification for {author}: {auto_intent_signal}")
-            print(f"      ⚠️ Disqualified Lead Candidate: '{author}' — No Commercial Buying Intent: {auto_intent_signal}")
-            return {
-                "status": "lead_disqualified",
-                "author": author,
-                "rejection_reason": auto_intent_signal,
-                "observation": f"Disqualified lead candidate '{author}'. Reason: {auto_intent_signal}. For sales, the candidate post MUST express an active development need, MVP build, technical problem, or hiring for builders/engineers."
-            }
-        intent_signal = auto_intent_signal
+            # Strict B2B Sales Intent Filter
+            has_intent, auto_intent_signal = verify_sales_buying_intent(card_content or reasoning, headline)
+            if not has_intent:
+                self.logger.warning(f"Rejected lead qualification for {author}: {auto_intent_signal}")
+                print(f"      ⚠️ Disqualified Lead Candidate: '{author}' — No Commercial Buying Intent: {auto_intent_signal}")
+                return {
+                    "status": "lead_disqualified",
+                    "author": author,
+                    "rejection_reason": auto_intent_signal,
+                    "observation": f"Disqualified lead candidate '{author}'. Reason: {auto_intent_signal}. For sales, the candidate post MUST express an active development need, MVP build, technical problem, or hiring for builders/engineers."
+                }
+            intent_signal = auto_intent_signal
 
         # Resolve authentic post URL using our 3-tier resolver
         post_url = resolve_post_url(
@@ -597,7 +729,11 @@ class LinkedInAgentTools:
             "Full BDE InMail / Cold Pitch": pitch_kit["inmail_pitch"],
             "Buying Intent Signal": intent_signal,
             "Custom Outreach Hook": custom_pitch or pitch_kit["connection_note"],
-            "Reasoning": reasoning
+            "Reasoning": reasoning,
+            "Judge Category": (judge or {}).get("category", ""),
+            "Judge Confidence": (judge or {}).get("confidence", ""),
+            "Evidence Quote": (judge or {}).get("evidence_quote", ""),
+            "Post Excerpt": " ".join(card_content.split())[:300]
         }
 
         self.exporter.append_lead(lead_record)

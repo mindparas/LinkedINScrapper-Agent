@@ -1,83 +1,23 @@
 {
-  "generated_at": "2026-10-30T19:02:00.868014",
-  "target_limit": 3,
+  "generated_at": "2026-11-02T10:32:15.628025",
+  "target_limit": 5,
   "qualified_leads_count": 0,
-  "skipped_cards_count": 2,
-  "total_turns": 24,
+  "skipped_cards_count": 0,
+  "total_turns": 22,
   "recent_executions": [
     {
-      "timestamp": "2026-10-30T18:57:58.296246",
-      "query": "building our MVP",
+      "timestamp": "2026-11-02T10:28:59.757309",
+      "query": "Seattle building our MVP",
       "freshness": "past-week",
       "target_objective": "Genuine decision-makers (Founders, CTOs) in tech startups seeking custom software and AI MVP engineering services.",
-      "cards_found": 3,
+      "cards_found": 1,
       "qualified_count": 0,
       "developer_guidance": "",
-      "outcome": "3 cards inspected, 0 passed full USA founder qualification"
+      "outcome": "1 cards inspected, 0 passed full USA founder qualification"
     },
     {
-      "timestamp": "2026-10-30T18:58:27.835881",
-      "query": "fractional CTO needed",
-      "freshness": "past-week",
-      "target_objective": "Genuine decision-makers (Founders, CTOs) in tech startups seeking custom software and AI MVP engineering services.",
-      "cards_found": 3,
-      "qualified_count": 0,
-      "developer_guidance": "",
-      "outcome": "3 cards inspected, 0 passed full USA founder qualification"
-    },
-    {
-      "timestamp": "2026-10-30T18:58:58.198721",
-      "query": "need software agency",
-      "freshness": "past-week",
-      "target_objective": "Genuine decision-makers (Founders, CTOs) in tech startups seeking custom software and AI MVP engineering services.",
-      "cards_found": 3,
-      "qualified_count": 0,
-      "developer_guidance": "",
-      "outcome": "3 cards inspected, 0 passed full USA founder qualification"
-    },
-    {
-      "timestamp": "2026-10-30T18:59:28.728281",
-      "query": "building MVP custom software",
-      "freshness": "past-week",
-      "target_objective": "Genuine decision-makers (Founders, CTOs) in tech startups seeking custom software and AI MVP engineering services.",
-      "cards_found": 3,
-      "qualified_count": 0,
-      "developer_guidance": "",
-      "outcome": "3 cards inspected, 0 passed full USA founder qualification"
-    },
-    {
-      "timestamp": "2026-10-30T19:00:00.585863",
-      "query": "looking for technical co-founder",
-      "freshness": "past-week",
-      "target_objective": "Genuine decision-makers (Founders, CTOs) in tech startups seeking custom software and AI MVP engineering services.",
-      "cards_found": 3,
-      "qualified_count": 0,
-      "developer_guidance": "",
-      "outcome": "3 cards inspected, 0 passed full USA founder qualification"
-    },
-    {
-      "timestamp": "2026-10-30T19:00:36.588296",
-      "query": "outsourcing development MVP",
-      "freshness": "past-week",
-      "target_objective": "Genuine decision-makers (Founders, CTOs) in tech startups seeking custom software and AI MVP engineering services.",
-      "cards_found": 3,
-      "qualified_count": 0,
-      "developer_guidance": "",
-      "outcome": "3 cards inspected, 0 passed full USA founder qualification"
-    },
-    {
-      "timestamp": "2026-10-30T19:01:04.153039",
-      "query": "San Francisco building our MVP",
-      "freshness": "past-week",
-      "target_objective": "Genuine decision-makers (Founders, CTOs) in tech startups seeking custom software and AI MVP engineering services.",
-      "cards_found": 3,
-      "qualified_count": 0,
-      "developer_guidance": "",
-      "outcome": "3 cards inspected, 0 passed full USA founder qualification"
-    },
-    {
-      "timestamp": "2026-10-30T19:01:12.521252",
-      "query": "Austin looking for dev shop",
+      "timestamp": "2026-11-02T10:29:11.387501",
+      "query": "Boston looking for dev shop",
       "freshness": "past-week",
       "target_objective": "Genuine decision-makers (Founders, CTOs) in tech startups seeking custom software and AI MVP engineering services.",
       "cards_found": 0,
@@ -86,8 +26,48 @@
       "outcome": "0 cards returned on LinkedIn (Zero results)"
     },
     {
-      "timestamp": "2026-10-30T19:01:38.337251",
-      "query": "NYC building our MVP",
+      "timestamp": "2026-11-02T10:29:40.311560",
+      "query": "Bay Area need software agency",
+      "freshness": "past-week",
+      "target_objective": "Genuine decision-makers (Founders, CTOs) in tech startups seeking custom software and AI MVP engineering services.",
+      "cards_found": 2,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "2 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-11-02T10:30:09.785674",
+      "query": "Denver building our MVP",
+      "freshness": "past-week",
+      "target_objective": "Genuine decision-makers (Founders, CTOs) in tech startups seeking custom software and AI MVP engineering services.",
+      "cards_found": 1,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "1 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-11-02T10:30:23.631330",
+      "query": "Los Angeles looking for dev shop",
+      "freshness": "past-week",
+      "target_objective": "Genuine decision-makers (Founders, CTOs) in tech startups seeking custom software and AI MVP engineering services.",
+      "cards_found": 0,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "0 cards returned on LinkedIn (Zero results)"
+    },
+    {
+      "timestamp": "2026-11-02T10:30:54.240738",
+      "query": "Chicago building our MVP",
+      "freshness": "past-week",
+      "target_objective": "Genuine decision-makers (Founders, CTOs) in tech startups seeking custom software and AI MVP engineering services.",
+      "cards_found": 2,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "2 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-11-02T10:31:24.238639",
+      "query": "YC building our MVP",
       "freshness": "past-week",
       "target_objective": "Genuine decision-makers (Founders, CTOs) in tech startups seeking custom software and AI MVP engineering services.",
       "cards_found": 3,
@@ -96,14 +76,34 @@
       "outcome": "3 cards inspected, 0 passed full USA founder qualification"
     },
     {
-      "timestamp": "2026-10-30T19:02:00.866717",
-      "query": "Seattle need software agency",
+      "timestamp": "2026-11-02T10:31:36.042765",
+      "query": "Techstars looking for dev shop",
       "freshness": "past-week",
       "target_objective": "Genuine decision-makers (Founders, CTOs) in tech startups seeking custom software and AI MVP engineering services.",
-      "cards_found": 3,
+      "cards_found": 0,
       "qualified_count": 0,
       "developer_guidance": "",
-      "outcome": "3 cards inspected, 0 passed full USA founder qualification"
+      "outcome": "0 cards returned on LinkedIn (Zero results)"
+    },
+    {
+      "timestamp": "2026-11-02T10:31:47.626278",
+      "query": "San Francisco fractional CTO needed",
+      "freshness": "past-week",
+      "target_objective": "Genuine decision-makers (Founders, CTOs) in tech startups seeking custom software and AI MVP engineering services.",
+      "cards_found": 0,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "0 cards returned on LinkedIn (Zero results)"
+    },
+    {
+      "timestamp": "2026-11-02T10:32:15.620919",
+      "query": "Austin looking for technical co-founder",
+      "freshness": "past-week",
+      "target_objective": "Genuine decision-makers (Founders, CTOs) in tech startups seeking custom software and AI MVP engineering services.",
+      "cards_found": 2,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "2 cards inspected, 0 passed full USA founder qualification"
     }
   ]
 }

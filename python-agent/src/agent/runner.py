@@ -14,6 +14,7 @@ from src.config import (
     BASE_DIR
 )
 from src.tools.schemas import AGENT_TOOLS
+from src.agent.context import compact_tool_result, window_messages
 
 def run_autonomous_agent(driver, niche, target_limit, exporter, memory, logger, max_duration_seconds=None):
     """
@@ -42,57 +43,18 @@ def run_autonomous_agent(driver, niche, target_limit, exporter, memory, logger, 
         f"  * Start with 'past-24h'; the tool falls back to 'past-week' automatically when a query has no fresh results.\n\n"
     )
 
-    system_prompt = f"""You are an elite, fully autonomous Business Development Executive (BDE) AI Agent discovering prospective high-intent sales client leads on LinkedIn.
-AGENCY SERVICE / NICHE: {niche}
-TARGET GEOGRAPHY: United States ONLY (User is working remotely from India; you must strictly eliminate India, Pakistan, UK, and international leads).
-ROLE RESTRICTION: Absolutely NO HR managers, recruiters, headhunters, staffing brokers (e.g. people connecting professionals/candidates or hiring for other startups), job seekers, OR INTERMEDIARIES (VCs, investors, accelerators, media curators).
-IDEAL CLIENTS (SALES-READY LEADS): Authentic direct decision-makers (Founders, Co-Founders, CEOs, CTOs, VPs of Engineering) of tech/software startups who have an ACTIVE TECHNICAL BUYING OR BUILDING NEED (e.g. building an MVP, seeking dev shop/agency, needing external engineering help, looking for AI development partners, or hiring founding builders).
+    system_prompt = f"""You are an autonomous BDE lead-discovery agent for an Indian software/AI development agency ({niche}).
+GOAL: find {target_limit} US founders/CTOs/VPs who posted a CURRENT need for outside engineering help (MVP build, dev shop/agency, contractors, technical co-founder, engineering hires).
+Session CSV: {exporter.csv_path}
 
-SESSION PERSISTENT CONTEXT & ISOLATED CSV:
-- Current Session CSV: {exporter.csv_path} (Mirrored to: {exporter.current_csv_path})
-- Current Session Leads Collected: {len(exporter.leads)} (Goal: {target_limit} leads)
-{us_time_guidance}CRITICAL OPERATIONAL INSTRUCTIONS & USA HIGH-INTENT SALES STRATEGY:
-1. STRICT COMMERCIAL BUYING INTENT FILTER:
-   - A serious sales lead is NOT just anyone with "Founder" in their headline.
-   - The candidate's post MUST express an active development need, MVP build, technical problem, or engineering hiring need.
-   - REJECT immediately if the author is a recruiter, headhunter, career coach, or talent broker (e.g., "connecting professionals", "executive search", "staffing", "hiring for startups").
-   - REJECT generic motivational posts, news links, or self-promotional thought leadership with no active engineering requirement.
-   - REJECT if the hiring or role is already marked as filled, closed, or celebrated as completed.
-
-2. PROVEN HIGH-YIELD SEARCH PATTERNS:
-   LinkedIn content search has NO native country filter. Job-title phrases like "founding engineer" are dominated by recruiters and job seekers.
-   Prefer BUYER-INTENT phrases (what founders who need an agency actually write), optionally anchored to a US hub/accelerator:
-   - looking for dev shop / need software agency / building MVP custom software
-   - fractional CTO needed / looking for technical co-founder / outsourcing development MVP
-   - San Francisco building our MVP / Austin looking for dev shop / NYC building our MVP / YC building our MVP
-   Queries with neither a US anchor nor a buyer-intent phrase are rejected by the tool; repeated queries are rejected too.
-
-3. STRICT SEARCH SYNTAX RULES (PREVENT ZERO RESULTS):
-   - NEVER use unnecessary double quotes around keywords. Double quotes on LinkedIn enforce strict verbatim character matching which eliminates relevant variants and yields 0 results!
-   - NEVER put "United States" or "USA" in the search box (it yields 0 results because real US founders don't write "USA").
-   - Keep queries natural, concise, and focused on tech hubs and founder hiring vernacular.
-
-4. COGNITIVE REASONING & STRATEGY TRANSPARENCY:
-   - For EVERY execute_search call, you must explicitly articulate:
-     * target_objective: Exactly what prospective client persona or goal you want to achieve with this search.
-     * query: The US-anchored search keywords you autonomously synthesized.
-     * query_rationale: Strategic reason why these specific keywords were selected for '{niche}'.
-     * feasibility_analysis: Will this query achieve the objective, what posts will it attract, and why will it avoid noise and recruiters?
-     * developer_feedback_alignment: Explicitly how this query strictly obeys and incorporates all guidance.
-
-4b. CODE-LEVEL PRE-FILTERING:
-   - The tools auto-reject obvious recruiters/brokers, cards with no title and no intent, and non-US profiles, and auto-scroll for more cards. Those are never shown to you; do not re-evaluate them.
-   - Cards that carry verified_location/is_usa_verified were already profile-checked. Skip a card only with a SPECIFIC reason citing evidence (headline text, post excerpt, location).
-
-5. EARLY FEED BAILOUT & RECOVERY:
-   - If 2 consecutive cards in a search result fail USA qualification or belong to recruiters/freelancers, STOP scrolling that feed immediately! Formulate an improved query autonomously targeting a different US tech hub or accelerator.
-   - If 0 cards are returned, test 'past-week' freshness or rotate to the next high-yield US metro.
-
-6. DEEP PROFILE LOCATION VERIFICATION:
-   - Inspect profile top-card for 100% US presence before qualifying.
-
-7. AUTONOMOUS CAMPAIGN COMPLETION:
-   - Only call finish_campaign when the target limit of {target_limit} genuine leads has been collected."""
+HOW YOU WORK
+- Search with execute_search, then scan_and_read_cards. Each card already carries a verdict from a dedicated lead judge and many are profile-verified. Code auto-rejects recruiters, agencies, job seekers and non-US authors; never re-evaluate those.
+- qualify_and_save_lead only for cards with judge.category BUYER (confidence >= 0.7) whose author is a decision maker; the tool enforces this. Use verify_profile_location only if a promising card has no verified_location.
+- skip_card only with a specific reason citing evidence.
+- Each turn you get a STATE block (queries tried and their yields, searches left, a suggested next query). Use it: keep what produced buyers, go more specific when a query is noisy, and prefer the suggested query unless the results give you a better idea. Start simple and add specifics (US hub or accelerator, then industry/stack) only as results call for it.
+- Queries: natural, unquoted, never "USA"/"United States". Repeats and queries without a US anchor or buyer-intent phrase are rejected by the tool.
+- Stop with finish_campaign only when {target_limit} leads are saved, or when told HALTED.
+- For every execute_search, briefly state target_objective, query_rationale and feasibility_analysis (one sentence each)."""
 
     starting_leads_count = len(exporter.leads)
     target_total_leads = starting_leads_count + target_limit
@@ -100,7 +62,7 @@ SESSION PERSISTENT CONTEXT & ISOLATED CSV:
     initial_query = tools_engine.get_next_recommended_query()
     messages = [
         {"role": "system", "content": system_prompt},
-        {"role": "user", "content": f"Begin autonomous lead discovery campaign. Target: {target_limit} genuine verified USA decision-maker leads for '{niche}'. Session starts fresh with 0 previous leads. Start by executing an unquoted search query in a top US tech hub (such as '{initial_query}'), scan cards, verify USA location, ensure candidate is an authentic Founder/CTO with active building or engineering need, and qualify and save the leads."}
+        {"role": "user", "content": f"Begin. Find {target_limit} verified US leads. Suggested first query: '{initial_query}'."}
     ]
 
     is_finished = False
@@ -116,6 +78,11 @@ SESSION PERSISTENT CONTEXT & ISOLATED CSV:
             logger.info(f"Time limit of {max_duration_seconds/60:.1f} minutes reached. Stopping agent.")
             print(f"\n{Style.YELLOW}{Style.BOLD}⏱️ TIME LIMIT REACHED: {max_duration_seconds/60:.1f} minutes elapsed. Wrapping up and saving collected leads...{Style.RESET}")
             is_finished = True
+            break
+
+        if tools_engine.halt_reason:
+            print(f"\n{Style.RED}{Style.BOLD}🛑 SAFETY HALT: {tools_engine.halt_reason}. Stopping to protect your LinkedIn account; leads found so far are saved.{Style.RESET}")
+            logger.error(f"Run halted: {tools_engine.halt_reason}")
             break
 
         turn += 1
@@ -161,9 +128,12 @@ SESSION PERSISTENT CONTEXT & ISOLATED CSV:
             "Content-Type": "application/json",
             "Authorization": f"Bearer {OPENAI_API_KEY}"
         }
+        messages = window_messages(messages)
+        state_msg = {"role": "user", "content": "STATE\n" + tools_engine.state_summary(
+            target_total_leads, len(exporter.leads))}
         payload = {
             "model": "gpt-4o-mini",
-            "messages": messages,
+            "messages": messages[:2] + [state_msg] + messages[2:],
             "tools": AGENT_TOOLS,
             "tool_choice": "auto",
             "temperature": 0.2
@@ -356,7 +326,7 @@ SESSION PERSISTENT CONTEXT & ISOLATED CSV:
             messages.append({
                 "role": "tool",
                 "tool_call_id": call_id,
-                "content": json.dumps(result, ensure_ascii=False)
+                "content": compact_tool_result(fn_name, result)
             })
 
             if is_finished or len(exporter.leads) >= target_total_leads:
@@ -373,15 +343,7 @@ SESSION PERSISTENT CONTEXT & ISOLATED CSV:
             messages.append(pud)
 
     # Save final memory record
-    if tools_engine.current_query:
-        memory.record_query(
-            query=tools_engine.current_query,
-            freshness=tools_engine.current_freshness,
-            rationale=tools_engine.current_rationale,
-            expected_output=getattr(tools_engine, "current_target_objective", ""),
-            cards_count=tools_engine.cards_on_current_query,
-            qualified_count=tools_engine.qualified_on_current_query
-        )
+    tools_engine._finalize_query()
 
     # Save summary report
     analytics_path = os.path.join(BASE_DIR, "query_performance_analytics.json")

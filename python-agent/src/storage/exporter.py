@@ -50,7 +50,11 @@ class LiveLeadExporter:
             "Full BDE InMail / Cold Pitch",
             "Buying Intent Signal",
             "Custom Outreach Hook",
-            "Reasoning"
+            "Reasoning",
+            "Judge Category",
+            "Judge Confidence",
+            "Evidence Quote",
+            "Post Excerpt"
         ]
         
         # Initialize brand new CSV file for this session with header only

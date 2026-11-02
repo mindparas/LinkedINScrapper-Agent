@@ -20,6 +20,7 @@ class AgentMemory:
             "user_feedback_history": [],
             "qualified_leads": [],
             "skipped_fingerprints": {},
+            "query_stats": {},
             "last_updated": datetime.now().isoformat()
         }
         self.load()
@@ -111,6 +112,25 @@ class AgentMemory:
             "fit_score": lead_dict.get("Fit Score")
         })
         self.save()
+
+    def record_query_stats(self, query, level, posts, buyers, us_buyers, leads):
+        """Aggregate what a query actually produced; the planner uses this to pick the next one."""
+        q = (query or "").strip().lower()
+        if not q:
+            return
+        st = self.data.setdefault("query_stats", {}).setdefault(
+            q, {"level": level, "runs": 0, "posts": 0, "buyers": 0, "us_buyers": 0, "leads": 0})
+        st["level"] = level
+        st["runs"] += 1
+        st["posts"] += posts
+        st["buyers"] += buyers
+        st["us_buyers"] += us_buyers
+        st["leads"] += leads
+        st["last_run"] = datetime.now().isoformat()
+        self.save()
+
+    def query_stats(self):
+        return self.data.get("query_stats", {})
 
     MAX_SKIPPED_FINGERPRINTS = 3000
     SKIP_TTL_DAYS = 14

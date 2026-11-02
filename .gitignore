@@ -42,3 +42,9 @@ Thumbs.db
 .vscode/
 *.swp
 
+
+# Agent runtime data (real posts / API cache / usage counters) — seed_labeled.jsonl stays tracked
+**/dataset/cards.jsonl
+**/dataset/judge_cache.json
+**/dataset/usage.json
+**/dataset/labels.jsonl
