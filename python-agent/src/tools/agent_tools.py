@@ -24,22 +24,39 @@ from src.agent.planner import StrategicQueryPlanner
 from src.agent.evaluator import BDESalesIntelligenceSynthesizer
 from src.judge import LeadJudge
 from src.safety import UsageBudget, detect_checkpoint
+from src.agent.mission import DEFAULT_MISSION
+from src.metrics import RunMetrics
 
 class LinkedInAgentTools:
     """
     Sensor and Actuator tool suite executed by the Autonomous AI Agent.
     Interacts directly with the active Selenium Chrome driver.
     """
-    def __init__(self, driver, exporter, memory, logger, active_developer_directives=None):
+    def __init__(self, driver, exporter, memory, logger, active_developer_directives=None, mission=None, metrics=None):
         self.driver = driver
         self.exporter = exporter
         self.memory = memory
         self.logger = logger
         self.evaluated_fingerprints = set()
         self.active_developer_directives = active_developer_directives if active_developer_directives is not None else []
-        self.planner = StrategicQueryPlanner(memory=memory)
+        self.mission = mission or DEFAULT_MISSION
+        self.metrics = metrics or RunMetrics(mission=self.mission)
+        self.planner = StrategicQueryPlanner(memory=memory, mission=self.mission, logger=logger)
+        self.engine = self.planner.engine
+        self.freshness_counts = ""
+        self.dry_cutoff_hit = False
+        self.stagnation_reason = ""
+        self.brain_event = ""
+        self.query_samples = []
+        print("🧭 Planning the search strategy (mission → queries)…")
+        self.engine.prepare()
+        print(f"   {len(self.engine.pool)} candidate queries across {len({p['angle'] for p in self.engine.pool})} angles; "
+              f"first: '{self.engine.suggest()}'")
         self.evaluator = BDESalesIntelligenceSynthesizer()
-        self.judge = LeadJudge(logger=logger)
+        self.judge = LeadJudge(logger=logger, mission=self.mission)
+        self.ns = f"{self.mission.key}::" if self.mission.key else ""   # per-mission memory namespace
+        self.query_started = time.time()
+        self.query_dom_cards = 0
         self.usage = UsageBudget()
         self.halt_reason = ""
         self.judged_count = 0
@@ -105,7 +122,7 @@ class LinkedInAgentTools:
             qualified_count=self.qualified_on_current_query,
         )
         self.memory.record_query_stats(
-            q, level, self.posts_judged_on_query, self.buyers_on_query,
+            self.ns + q, level, self.posts_judged_on_query, self.buyers_on_query,
             self.us_buyers_on_query, self.qualified_on_current_query,
         )
         self.planner.record_query_execution(
@@ -115,10 +132,27 @@ class LinkedInAgentTools:
         self.planner.record_feed_feedback(
             query=q, total_cards=self.posts_judged_on_query, categories=self.categories_on_query
         )
+        event = self.engine.observe(
+            q, self.current_freshness, self.query_dom_cards, self.posts_judged_on_query, self.buyers_on_query,
+            dict(self.categories_on_query), self.qualified_on_current_query, list(self.query_samples))
+        if event:
+            self.brain_event = event
+            self.planner.last_learned_lesson = event
+            self.metrics.inc("query_replans")
+            print(f"\n{Style.CYAN}{Style.BOLD}🧠 SEARCH BRAIN CHANGED{Style.RESET} {event}")
+        if self.engine.stagnant() and not self.stagnation_reason:
+            self.stagnation_reason = (f"{self.engine.dry_streak} consecutive queries matched nothing even after "
+                                      f"{self.engine.replans} strategy change(s)")
         self.query_log.append({
             "query": q, "level": level, "posts": self.posts_judged_on_query,
             "buyers": self.buyers_on_query, "us_buyers": self.us_buyers_on_query,
             "leads": self.qualified_on_current_query, "categories": dict(self.categories_on_query),
+        })
+        self.metrics.query_done({
+            "query": q, "freshness": self.current_freshness, "dom_cards": self.query_dom_cards,
+            "posts_judged": self.posts_judged_on_query, "matches": self.buyers_on_query,
+            "location_confirmed": self.us_buyers_on_query, "leads": self.qualified_on_current_query,
+            "duration_sec": round(time.time() - self.query_started, 1),
         })
         self.current_query = ""
 
@@ -127,6 +161,8 @@ class LinkedInAgentTools:
         lines = [
             f"LEADS: {leads_now}/{leads_target}. Searches left today: {self.usage.remaining('searches')}.",
         ]
+        if not self.mission.is_default:
+            lines.append(f"MISSION: {self.mission.summary}")
         if self.query_log:
             lines.append("QUERIES TRIED THIS RUN (level, posts judged, buyers, US buyers, leads, top categories):")
             for e in self.query_log[-8:]:
@@ -136,7 +172,10 @@ class LinkedInAgentTools:
             lines.append(f"CURRENT QUERY: '{self.current_query}' (L{self.planner.level_of(self.current_query)}), "
                          f"{self.posts_judged_on_query} posts judged so far, {self.buyers_on_query} buyers.")
         lines.append(f"🧠 STRATEGIC COGNITION & LEARNED FEEDBACK:\n  {self.planner.last_learned_lesson}")
-        lines.append(f"ACTIVE STRATEGIC PATTERN: '{self.planner.current_archetype}' (Keep queries natural to 2-3 words. Never combine city + industry + intent).")
+        nxt = self.get_next_recommended_query()
+        lines.append(f"SEARCH BRAIN #{self.engine.generation} (angle of next query: {self.engine.angle_of(nxt)}; "
+                     f"{self.engine.dry_streak} queries in a row without a match; "
+                     f"a new strategy is written after {self.engine.DRY_REPLAN_AFTER}). Use the suggested query unless you have clearly better evidence; short natural phrases the target author would write.")
         lines.append(f"SUGGESTED NEXT QUERY (from planner): '{self.get_next_recommended_query()}'")
         return "\n".join(lines)
 
@@ -175,7 +214,7 @@ class LinkedInAgentTools:
         for k in keys:
             if k:
                 self.evaluated_fingerprints.add(k)
-        self.memory.record_skips(keys)
+        self.memory.record_skips([self.ns + k for k in keys if k])
 
     def get_next_recommended_query(self):
         return self.planner.get_next_recommended_query(self.executed_queries)
@@ -207,7 +246,11 @@ class LinkedInAgentTools:
         if not self.usage.allow("searches"):
             self.halt_reason = "Daily search limit reached (account-safety budget)"
             return {"status": "halted", "observation": f"HALTED: {self.halt_reason}. Call finish_campaign."}
-        clean_q = clean_linkedin_boolean_query(query)
+        raw_q = (query or "").strip()
+        if raw_q.startswith('"') and raw_q.endswith('"') and raw_q.count('"') == 2 and 3 <= len(raw_q.split()) <= 6:
+            clean_q = '"' + clean_linkedin_boolean_query(raw_q[1:-1]) + '"'   # exact phrase: keep the quotes
+        else:
+            clean_q = clean_linkedin_boolean_query(query)
         # Ensure query is non-empty and has substance
         if not clean_q or len(clean_q.strip()) < 2:
             clean_q = self.get_next_recommended_query()
@@ -219,6 +262,22 @@ class LinkedInAgentTools:
             clean_q = fresh_q
 
         self._finalize_query()
+        if self.stagnation_reason:
+            return {"status": "halted", "observation": f"STOPPING: {self.stagnation_reason}. Call finish_campaign."}
+
+        # The learner overrides the agent's pick right after a strategy change, or when the query's words
+        # have a proven record of pulling the wrong authors.
+        replaced = ""
+        if self.brain_event or self.engine.predicted_poor(clean_q):
+            better = self.get_next_recommended_query()
+            if better and better.lower() != clean_q.lower():
+                replaced = (f"Planner replaced '{clean_q}' with '{better}' "
+                            + ("(search strategy was just revised)." if self.brain_event else "(its words have a poor track record)."))
+                print(f"\n{Style.YELLOW}🔁 {replaced}{Style.RESET}")
+                clean_q = better
+        self.brain_event = ""
+        self.query_samples = []
+        self.dry_cutoff_hit = False
 
         self.scroll_count_on_query = 0
         self.cards_on_current_query = 0
@@ -232,6 +291,8 @@ class LinkedInAgentTools:
         self.us_buyers_on_query = 0
         self.categories_on_query = {}
         self.current_query = clean_q
+        self.query_started = time.time()
+        self.query_dom_cards = 0
         self.executed_queries.add(clean_q.lower())
         self.current_freshness = freshness if freshness in ["past-24h", "past-week"] else "past-24h"
         self.current_target_objective = target_objective
@@ -276,50 +337,56 @@ class LinkedInAgentTools:
 
         self.logger.info(f"Agent executing search: '{clean_q}' | Objective: {target_objective} | Rationale: {query_rationale}")
         self.usage.record("searches")
+        self.metrics.inc("searches")
         time.sleep(random.uniform(2.5, 4.5))  # human-like pacing between searches
 
-        # Dual-Timeframe Strategy:
-        # Check 'past-24h' first to catch breaking fresh leads.
-        # If past-24h has fewer than 3 posts (or 0), seamlessly check 'past-week'
-        # so the agent always inspects both 24h and weekly posts for every query.
+        # Dual-timeframe strategy. The past-week page is a superset of past-24h (both newest-first), so:
+        #  - normally load past-24h, and if it is thin (< WEEK_WHEN_BELOW posts) also load past-week and keep
+        #    the larger result;
+        #  - when the learner has seen that past-24h is almost always thin for this mission, go straight to
+        #    past-week (one page load instead of two).
+        cards_24h, cards_week = None, None
         freshness_used = "past-24h"
-        has_no_results, visible_cards = self._load_search(clean_q, "past-24h")
+        if self.engine.freshness_first() == "past-week":
+            has_no_results, visible_cards = self._load_search(clean_q, "past-week")
+            cards_week, freshness_used = visible_cards, "past-week"
+        else:
+            has_no_results, visible_cards = self._load_search(clean_q, "past-24h")
+            cards_24h = visible_cards
         if self._safety_halt():
             return {"status": "halted", "observation": f"HALTED: {self.halt_reason}. Call finish_campaign."}
 
-        # If 24h had few or no results, check past-week
-        if has_no_results or visible_cards < 3:
-            self.logger.info(f"Only {visible_cards} cards in past-24h for '{clean_q}'. Automatically checking past-week for broader coverage.")
-            has_no_results_wk, visible_cards_wk = self._load_search(clean_q, "past-week")
-            if visible_cards_wk > visible_cards:
-                has_no_results = has_no_results_wk
-                visible_cards = visible_cards_wk
-                freshness_used = "past-week"
-            elif visible_cards > 0:
-                freshness_used = "past-24h"
-            else:
-                has_no_results = True
-                visible_cards = 0
-                freshness_used = "both 24h & past-week evaluated"
+        if cards_week is None and (has_no_results or visible_cards < self.WEEK_WHEN_BELOW):
+            self.logger.info(f"Only {visible_cards} cards in past-24h for '{clean_q}'. Also checking past-week.")
+            has_no_results_wk, cards_week = self._load_search(clean_q, "past-week")
+            self.metrics.inc("weekly_fallbacks")
+            if cards_week > visible_cards:
+                has_no_results, visible_cards, freshness_used = has_no_results_wk, cards_week, "past-week"
+            elif visible_cards == 0:
+                has_no_results, freshness_used = True, "both 24h & past-week evaluated"
+        self.engine.learner.observe_freshness(cards_24h if cards_24h is not None else 0, cards_week)
+        self.freshness_counts = f"24h={cards_24h if cards_24h is not None else 'skipped'}, week={cards_week if cards_week is not None else 'not needed'}"
 
         self.current_freshness = freshness_used
         self.cards_on_current_query = visible_cards
         self.last_dom_card_count = visible_cards
 
         if has_no_results or visible_cards == 0:
+            self.metrics.inc("zero_result_searches")
             self.planner.record_zero_yield(clean_q)
             self.planner.record_feed_feedback(clean_q, 0, {})
             next_pattern = self.planner.current_archetype
             next_rec = self.get_next_recommended_query()
             obs = (
-                f"0 results found on LinkedIn across BOTH 'past-24h' and 'past-week' for '{clean_q}'. "
+                f"0 results found on LinkedIn across BOTH 'past-24h' and 'past-week' for '{clean_q}' ({self.freshness_counts}). "
                 f"Page displays 'No results found'. DO NOT SCROLL on this page. "
                 f"Pattern automatically shifted to '{next_pattern}'. Recommended next move: execute query '{next_rec}'."
             )
             status = "zero_results"
         else:
             self.planner.record_positive_yield(clean_q)
-            obs = f"Search successfully returned results for '{clean_q}' (Dual-timeframe evaluated; showing {freshness_used}). Found {visible_cards} post cards visible. Call scan_and_read_cards to inspect them."
+            obs = (f"Search successfully returned results for '{clean_q}' (cards: {self.freshness_counts}; showing {freshness_used}). "
+                   f"Found {visible_cards} post cards visible. " + (replaced + " " if replaced else "") + "Call scan_and_read_cards to inspect them.")
             status = "success"
 
         return {
@@ -330,6 +397,9 @@ class LinkedInAgentTools:
             "cards_visible_count": visible_cards,
             "observation": obs
         }
+
+    WEEK_WHEN_BELOW = 10
+    DRY_CUTOFF = 8          # judged posts with zero matches after which a query is abandoned
 
     def _load_search(self, clean_q, freshness):
         encoded = urllib.parse.quote(clean_q)
@@ -349,19 +419,27 @@ class LinkedInAgentTools:
     def _collect_new_cards(self):
         """One DOM pass: dedupe against evaluated/skipped/qualified, annotate, and auto-skip clear rejects."""
         cards = scan_linkedin_content_cards(self.driver, self.logger)
+        self.metrics.inc("dom_cards_seen", len(cards))
+        self.query_dom_cards = max(self.query_dom_cards, len(cards))
         qualified_urls = {self._norm_url(ex.get("Profile URL")) for ex in self.exporter.leads}
         fresh, auto_skipped = [], 0
 
         for c in cards:
+            if self.posts_judged_on_query >= self.DRY_CUTOFF and self.buyers_on_query == 0:
+                self.dry_cutoff_hit = True      # stop paying to judge a query that is clearly off-target
+                break
             auth_low = c.get("author", "").strip().lower()
             url_clean = self._norm_url(c.get("author_url", ""))
             content = c.get("content", "")
 
             if url_clean in qualified_urls:
+                self.metrics.inc("known_duplicates")
                 continue
-            if any(k and (k in self.evaluated_fingerprints or self.memory.is_skipped(k)) for k in (auth_low, url_clean)):
+            if any(k and (k in self.evaluated_fingerprints or self.memory.is_skipped(self.ns + k)) for k in (auth_low, url_clean)):
+                self.metrics.inc("known_duplicates")
                 continue
             if len(content) <= 15:
+                self.metrics.inc("too_short")
                 continue
 
             c["parsed_age_days"] = round(parse_post_age(c.get("raw_timestamp", "")), 2)
@@ -369,27 +447,43 @@ class LinkedInAgentTools:
             has_intent, intent_hint = verify_sales_buying_intent(content, c.get("headline", ""))
 
             # Cheap pre-filter: obvious recruiters/brokers never cost a judge call
-            is_broker = (not is_auth) and "disqualified persona pattern" in auth_hint
+            # (only for the default mission: a custom mission may legitimately target recruiters etc.)
+            is_broker = self.mission.is_default and (not is_auth) and "disqualified persona pattern" in auth_hint
+            if is_broker:
+                self.metrics.inc("prefiltered")
             verdict = None
             if not is_broker:
                 verdict = self.judge.judge(c.get("author", ""), c.get("headline", ""), content)
                 self.judged_count += 1
                 self.posts_judged_on_query += 1
                 self.categories_on_query[verdict["category"]] = self.categories_on_query.get(verdict["category"], 0) + 1
+                if verdict["category"] != "ERROR":
+                    self.metrics.judged(verdict["category"])
                 if verdict["is_buyer"]:
                     self.buyers_on_query += 1
+                    self.metrics.inc("judge_buyers")
                 c["judge"] = verdict
                 self._log_card(c, verdict)
+                if not verdict["is_buyer"] and verdict["category"] != "ERROR" and len(self.query_samples) < 6:
+                    self.query_samples.append({
+                        "cat": verdict["category"], "who": (c.get("headline", "") or c.get("author", ""))[:50],
+                        "text": " ".join(content.split())[:140], "why": verdict["reasoning"][:110]})
             judge_ok = verdict is not None and verdict["category"] != "ERROR"
 
             if judge_ok:
                 # The judge is the primary gate; rules are only a fallback when it is unavailable
                 reject = not verdict["is_buyer"] and verdict["confidence"] >= 0.6
                 reason = f"Judge: {verdict['category']} ({verdict['confidence']:.2f}) {verdict['reasoning']}"
+            elif not self.mission.is_default:
+                # The regex fallback encodes the default (dev-shop) mission only: with a custom mission,
+                # leave the post unmarked so a later run can judge it once the LLM is reachable again.
+                self.logger.warning(f"Judge unavailable for '{c.get('author', '')}' - post left for a later run (custom mission).")
+                continue
             else:
                 reject = is_broker or (not is_auth and not has_intent)
                 reason = auth_hint if is_broker else f"{auth_hint}; {intent_hint}"
             if reject:
+                self.metrics.inc("auto_rejected")
                 self._register_skip(c.get("author", ""), c.get("author_url", ""))
                 self.skipped_count += 1
                 auto_skipped += 1
@@ -401,7 +495,10 @@ class LinkedInAgentTools:
                 c["bde_authenticity_check"] = f"JUDGE: decision_maker={verdict['author_is_decision_maker']}"
                 c["sales_intent_check"] = f"JUDGE: {verdict['category']} conf={verdict['confidence']:.2f} — {verdict['evidence_quote']}"
                 c["buying_intent_signal"] = verdict["need_summary"] or verdict["evidence_quote"] or "Judge-approved buying signal"
-                c["_passes_gates"] = LeadJudge.is_qualified(verdict, us_verified=True)  # profile visit decides location
+                c["_passes_gates"] = LeadJudge.is_qualified(  # profile visit decides location
+                    verdict, us_verified=True, require_dm=self.mission.require_decision_maker)
+                if c["_passes_gates"]:
+                    self.metrics.inc("passed_gates")
             else:
                 c["bde_authenticity_check"] = "PASS: Direct Founder/Exec" if is_auth else f"FLAGGED: {auth_hint}"
                 c["sales_intent_check"] = f"HIGH INTENT: {intent_hint}" if has_intent else f"LOW/NO INTENT: {intent_hint}"
@@ -417,7 +514,7 @@ class LinkedInAgentTools:
 
         # Scroll for more cards before declaring the feed dry
         scrolls = 0
-        while not unevaluated_cards and scrolls < self.MAX_AUTO_SCROLLS and not self._time_up():
+        while not unevaluated_cards and scrolls < self.MAX_AUTO_SCROLLS and not self._time_up() and not self.dry_cutoff_hit:
             scroll_res = self.scroll_feed(steps=1, rationale="auto-scroll: no new candidates in view")
             scrolls += 1
             more, skipped_more = self._collect_new_cards()
@@ -431,14 +528,25 @@ class LinkedInAgentTools:
         kept = []
         visits = 0
         for c in unevaluated_cards:
-            if c.pop("_passes_gates", False) and visits < self.MAX_AUTO_VERIFY and not self._time_up():
+            passes = c.pop("_passes_gates", False)
+            if passes and not self.mission.needs_us:
+                # Mission has no location filter: no profile visit needed (saves account budget)
+                c["verified_location"] = "Not required for this mission"
+                c["is_usa_verified"] = True
+                self.us_buyers_on_query += 1
+                self.metrics.inc("location_confirmed")
+                kept.append(c)
+                continue
+            if passes and visits < self.MAX_AUTO_VERIFY and not self._time_up():
                 visits += 1
                 res = self.verify_profile_location(author_url=c.get("author_url", ""))
                 c["verified_location"] = res.get("exact_location", "Unknown")
                 c["is_usa_verified"] = bool(res.get("is_usa_verified"))
                 if c["is_usa_verified"] and (c.get("judge") or {}).get("is_buyer"):
                     self.us_buyers_on_query += 1
+                    self.metrics.inc("location_confirmed")
                 if not c["is_usa_verified"] and res.get("exact_location") not in ("Error inspecting profile", "Unknown"):
+                    self.metrics.inc("non_us_rejected")
                     self._register_skip(c.get("author", ""), c.get("author_url", ""))
                     self.skipped_count += 1
                     auto_skipped += 1
@@ -467,6 +575,10 @@ class LinkedInAgentTools:
             return {"cards_found_count": 0, "cards": [], "auto_skipped": auto_skipped, "observation": obs}
 
         self.consecutive_zero_card_scans = 0
+        dry_hint = ""
+        if self.dry_cutoff_hit or (self.posts_judged_on_query >= 8 and self.buyers_on_query == 0):
+            dry_hint = (f" ⚠️ This query is DRY: {self.posts_judged_on_query} posts judged, none match the mission. "
+                        f"Stop scrolling it and run the next suggested query ('{self.get_next_recommended_query()}').")
         return {
             "cards_found_count": len(unevaluated_cards),
             "cards": unevaluated_cards,
@@ -475,7 +587,7 @@ class LinkedInAgentTools:
                 f"{len(unevaluated_cards)} candidate cards ({auto_skipped} more auto-rejected by code as recruiters/no-intent/non-US; do NOT re-evaluate those). "
                 + (f"Profile checks done: {'; '.join(verified_notes)}. " if verified_notes else "")
                 + "Cards with verified_location and is_usa_verified=true that show HIGH INTENT can go straight to qualify_and_save_lead; "
-                  "call verify_profile_location only for unverified cards you consider promising."
+                  "call verify_profile_location only for unverified cards you consider promising." + dry_hint
             )
         }
 
@@ -503,6 +615,7 @@ class LinkedInAgentTools:
         self.logger.info(f"Opening author profile in background tab to verify exact location: {author_url}")
         original_tab = self.driver.current_window_handle
         self.profile_visits += 1
+        self.metrics.inc("profile_visits")
 
         try:
             # Open profile in new background tab
@@ -675,7 +788,10 @@ class LinkedInAgentTools:
         judge = card.get("judge")
         if judge and judge.get("category") != "ERROR":
             # Judge-gated: only an evidence-backed, confident BUYER who is a decision maker is saved
-            if not LeadJudge.is_qualified(judge, us_verified=bool(card.get("is_usa_verified"))):
+            if not LeadJudge.is_qualified(
+                    judge, us_verified=bool(card.get("is_usa_verified")) or not self.mission.needs_us,
+                    require_dm=self.mission.require_decision_maker):
+                self.metrics.inc("lead_rejections")
                 why = (f"Judge verdict {judge['category']} (confidence {judge['confidence']:.2f}, "
                        f"decision_maker={judge['author_is_decision_maker']}, US={judge['us_signal']}): {judge['reasoning']}")
                 self.logger.warning(f"Rejected lead qualification for {author}: {why}")
@@ -683,6 +799,12 @@ class LinkedInAgentTools:
                 return {"status": "lead_disqualified", "author": author, "rejection_reason": why,
                         "observation": f"Disqualified '{author}'. {why}"}
             intent_signal = judge["need_summary"] or judge["evidence_quote"]
+        elif not self.mission.is_default:
+            # The regex guardrails below encode the default dev-shop mission only
+            self.metrics.inc("lead_rejections")
+            return {"status": "lead_disqualified", "author": author,
+                    "rejection_reason": "no judge verdict available for this card",
+                    "observation": f"Cannot save '{author}': the lead judge produced no verdict for this card."}
         else:
             # Strict Authenticity Guardrail
             is_authentic, auth_reason = verify_bde_lead_authenticity(
@@ -731,10 +853,14 @@ class LinkedInAgentTools:
             headline=headline,
             company=company,
             location=location,
-            post_content=card_content
+            post_content=card_content,
+            mission=self.mission,
+            need_type=(judge or {}).get("need_type", ""),
+            need_summary=(judge or {}).get("need_summary", "")
         )
 
         lead_record = {
+            "Mission": self.mission.title,
             "Author Name": author,
             "First Name": pitch_kit["first_name"],
             "Title / Headline": headline,
@@ -758,10 +884,12 @@ class LinkedInAgentTools:
             "Post Excerpt": " ".join(card_content.split())[:300]
         }
 
-        self.exporter.append_lead(lead_record)
+        was_new = self.exporter.append_lead(lead_record) is not False
         self.memory.record_qualified_lead(lead_record)
         self.qualified_on_current_query += 1
         total_leads = len(self.exporter.leads)
+        if was_new:
+            self.metrics.lead_saved(author, headline, self.current_query, judge, fit_score, location)
 
         # Mark fingerprint and profile as evaluated to prevent duplicates
         self.evaluated_fingerprints.add((author + "_" + reasoning[:30]).lower())
@@ -792,6 +920,7 @@ class LinkedInAgentTools:
 
     def skip_card(self, card_index: int, author: str, rejection_reason: str):
         self.skipped_count += 1
+        self.metrics.inc("llm_skips")
         author_url = ""
         if 0 <= card_index < len(self.last_scanned_cards) and self.last_scanned_cards[card_index].get("author") == author:
             author_url = self.last_scanned_cards[card_index].get("author_url", "")
@@ -849,6 +978,7 @@ class LinkedInAgentTools:
 
     def scroll_feed(self, steps: int = 1, rationale: str = ""):
         self.scroll_count_on_query += steps
+        self.metrics.inc("scrolls", steps)
         self.logger.info(f"Agent scrolling down feed: {steps} steps | Rationale: {rationale}")
 
         for _ in range(steps):

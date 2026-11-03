@@ -103,6 +103,30 @@ class BDESalesIntelligenceSynthesizer:
         return "Core Technical Build & Engineering Acceleration"
 
     @classmethod
+    def _custom_pitch_kit(cls, first_name, tech_stack, pain_point, need_type, need_summary, mission) -> Dict[str, Any]:
+        """Neutral outreach for user-defined missions: the default kit's dev-agency claims do not apply."""
+        topic = cls._truncate_words((need_summary or pain_point).rstrip("…. "), 80)
+        angle = (mission.outreach_angle or "").strip()
+        note = f"Hi {first_name}, your recent post about {topic} caught my eye. " + \
+               (angle if angle and len(angle) < 120 else "Would love to connect and exchange ideas.")
+        if len(note) > 295:
+            note = f"Hi {first_name}, your recent post about {cls._truncate_words(topic, 60)} caught my eye. Would love to connect!"
+        inmail = (
+            f"Hi {first_name},\n\n"
+            f"I came across your recent LinkedIn post: \"{topic}\".\n\n"
+            + (f"{angle}\n\n" if angle else "")
+            + "Would you be open to a brief chat to see if there is a fit?\n\nBest regards,\nBDE Team"
+        )
+        return {
+            "first_name": first_name,
+            "tech_stack": tech_stack,
+            "pain_point": need_summary or pain_point,
+            "intent_category": need_type.replace("_", " ").title() if need_type and need_type != "NONE" else mission.title,
+            "connection_note": note[:299].strip(),
+            "inmail_pitch": inmail,
+        }
+
+    @classmethod
     def synthesize_pitch_kit(
         cls,
         author: str,
@@ -110,13 +134,19 @@ class BDESalesIntelligenceSynthesizer:
         company: str,
         location: str,
         post_content: str,
-        niche: str = "custom software & AI MVP engineering"
+        niche: str = "custom software & AI MVP engineering",
+        mission=None,
+        need_type: str = "",
+        need_summary: str = ""
     ) -> Dict[str, Any]:
         first_name = cls.extract_first_name(author)
         tech_stack = cls.detect_tech_stack(post_content)
         pain_point = cls.extract_pain_point_summary(post_content, headline)
         intent_cat = cls.categorize_intent(post_content)
         comp_display = company if company and company.lower() != "startup" else "your startup"
+
+        if mission is not None and not mission.is_default:
+            return cls._custom_pitch_kit(first_name, tech_stack, pain_point, need_type, need_summary, mission)
 
         # ── 1. Personalized Connection Request Note (< 300 characters) ─────────
         topic = cls._truncate_words(pain_point.rstrip("…. "), 70)

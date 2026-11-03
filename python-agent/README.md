@@ -11,6 +11,7 @@ Designed specifically for offshore IT & software development agencies (such as I
 python-agent/
 ├── src/
 │   ├── config.py                  # Environment config, API keys, colors, and file logging
+│   ├── metrics.py                 # RunMetrics: end-of-run performance scorecard + JSON report + run history
 │   ├── verification/              # Multi-stage strict filtering & verification
 │   │   ├── persona_filter.py      # verify_bde_persona (strict founder/CTO vs recruiter/broker gate)
 │   │   ├── intent_engine.py       # verify_sales_intent (active MVP build & dev hiring requirement engine)
@@ -32,7 +33,8 @@ python-agent/
 │   │   └── agent_tools.py         # LinkedInAgentTools (sensor & actuator implementations)
 │   └── agent/                     # Core AI cognition & execution
 │       ├── runner.py              # run_autonomous_agent (multi-turn ReAct reasoning loop)
-│       ├── planner.py             # StrategicQueryPlanner (US hub rotation & feed diagnosis)
+│       ├── planner.py             # StrategicQueryPlanner (mission-driven query rotation & feed diagnosis)
+│       ├── mission.py             # Mission + interpret_intent/resolve_mission (user intent -> search spec)
 │       ├── evaluator.py           # BDESalesIntelligenceSynthesizer (pitch kit generator)
 │       └── cli.py                 # main (interactive terminal CLI)
 │
@@ -119,10 +121,17 @@ pip install -r requirements.txt
 ```
 
 ### Step 2: Configure Environment Credentials
-Ensure your OpenAI API key is set in `python-agent/.env`:
+Set a key for the LLM provider you want in `python-agent/.env` (both can be present):
 ```text
-OPENAI_API_KEY=sk-...
+ANTHROPIC_API_KEY=sk-ant-...        # Claude
+OPENAI_API_KEY=sk-...               # OpenAI (the older `gpt-apikey=` line also works)
+LLM_PROVIDER=anthropic              # or: openai   (unset = anthropic if its key exists, else openai)
+# Optional per-role models (defaults: claude-sonnet-5-5 / gpt-4o-mini):
+# LLM_MODEL_JUDGE=claude-sonnet-5-5   LLM_MODEL_AGENT=claude-haiku-5-5   LLM_MODEL_INTERPRETER=claude-sonnet-5-5
 ```
+All model calls go through `src/llm.py`; the run prints which provider/models it is using, and the
+metrics report prices each role with the model it used. The judge cache is keyed by model, so switching
+provider never reuses another model's verdicts.
 
 ### Step 3: Run One-Click Lead Discovery
 From the workspace root:
@@ -133,6 +142,36 @@ Or with custom duration and niche:
 ```bash
 ./run_leads.sh -n 5 -t 20 --niche "custom software & AI MVP engineering"
 ```
+
+### Step 3b: Tell the agent what kind of posts you want (Intent)
+Describe the posts in plain English, either with `--intent` or when prompted (ENTER keeps the default
+"US founders needing outsourced engineering"):
+```bash
+./run_leads.sh -n 3 -t 20 --intent "Healthcare startup founders in the US looking for an AI partner to build a HIPAA-compliant product"
+```
+An LLM turns that into a **mission**: what qualifies, who the author should be, location rule (US verified on the
+profile, or no location filter), what to exclude, and a set of short search phrases. The interpretation is printed;
+when you type the intent interactively you can press ENTER to accept, type a correction to refine it, or `q` to cancel.
+Vague requests ("good leads") trigger a clarifying question. The mission then drives query planning, the lead judge,
+location checks, the agent prompt and the outreach text. Skip memory and query stats are kept per mission, so a post
+rejected for one mission is still visible to another. Non-interactive runs (no TTY) use the default mission unless
+`--intent` is given. The old interactive CLI (`src/agent/cli.py`) reads the `INTENT` env var in non-interactive mode.
+
+### Step 3d: How the agent learns to search (query engine)
+You never write queries. The mission (your intent) is turned into searches by `src/agent/query_engine.py`:
+- **Strategist (LLM):** writes ~14 queries across different angles in the voice of the target author, and avoids words that attract sellers/recruiters.
+- **Re-planning:** after 3 queries in a row with no matching post (2 if the results were mostly sellers/recruiters) it reads what actually came back (category mix, junk examples, why they were rejected), writes a diagnosis, and produces a new set of queries with a different approach. The planner can override a query the agent picked right after a strategy change or when that query's words have a bad track record.
+- **Learner (online Bayesian bandit):** every word / word pair keeps a posterior of how often it returns matching posts and how often it pulls sellers/recruiters. Candidates are ranked by Thompson sampling, so it generalises to phrasings it has never run and balances exploring vs exploiting. Persisted per mission in `dataset/query_learning.json`, so every run starts smarter.
+- **Time filters:** past-24h is checked first and past-week is added whenever 24h returns fewer than 10 posts (past-week contains the 24h posts, newest first). If 24h keeps being thin for a mission, the agent goes straight to past-week to save a page load.
+- **No endless searching:** if `QUERY_STAGNATION_LIMIT` (default 9) queries in a row match nothing, even after strategy changes, the run stops with the reason and the diagnosis instead of waiting for the clock.
+
+### Step 3c: Performance metrics
+When a run ends (target reached, time limit, safety halt, error or Ctrl+C) the agent prints a scorecard: result vs
+target, a posts→leads funnel, efficiency (leads/hour, searches per lead, duplicate and empty-search rates), lead
+quality (judge confidence, need types), per-query results, estimated LLM cost and today's LinkedIn budget use, plus
+plain-language insights and a comparison with the previous run. The full detail is saved to
+`exports/metrics_<timestamp>.json`, and one summary line per run is appended to `dataset/run_history.jsonl`.
+The cost figure is an estimate based on gpt-4o-mini list prices (constants in `src/metrics.py`).
 
 ### Step 4: Access Pristine Leads
 Leads are exported in real time to `python-agent/exports/`:

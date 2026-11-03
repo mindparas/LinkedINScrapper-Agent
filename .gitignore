@@ -30,8 +30,10 @@ copied_post_url.txt
 
 # Session Logs & Lead Exports (keep folders, ignore generated files)
 **/logs/*.log
+**/logs/*.txt
 **/exports/*.csv
 **/exports/*.json
+**/exports/*.md
 !**/exports/.gitkeep
 !**/logs/.gitkeep
 
@@ -48,3 +50,6 @@ Thumbs.db
 **/dataset/judge_cache.json
 **/dataset/usage.json
 **/dataset/labels.jsonl
+
+**/dataset/run_history.jsonl
+**/dataset/query_learning.json

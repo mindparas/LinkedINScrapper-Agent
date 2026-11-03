@@ -69,17 +69,38 @@ class StrategicQueryPlanner:
 
     RECENT_DAYS = 3          # a query run within this window is not repeated
 
-    def __init__(self, niche: str = "custom software & AI MVP engineering", memory=None):
+    def __init__(self, niche: str = "custom software & AI MVP engineering", memory=None, mission=None, logger=None):
         self.niche = niche
+        self.logger = logger
         self.memory = memory
+        self.mission = mission
+        self.custom = bool(mission and not mission.is_default and mission.query_families)
+        self.ns = f"{mission.key}::" if self.custom and mission.key else ""
         self.executed_queries: List[Dict[str, Any]] = []
-        self.archetype_order = ["mvp_build", "founding_engineer", "agency_search", "contract_dev"]
+        if self.custom:
+            # The user's mission decides what to search for; the built-in founder archetypes are not used
+            self.archetypes = {k: list(v) for k, v in mission.query_families.items()}
+            self.archetype_order = list(self.archetypes)
+            first_q = next(iter(self.archetypes[self.archetype_order[0]]))
+            self.last_learned_lesson = f"Start with the mission's most direct phrasing, e.g. '{first_q}'."
+        else:
+            self.archetypes = self.ARCHETYPES
+            self.archetype_order = ["mvp_build", "founding_engineer", "agency_search", "contract_dev"]
+            self.last_learned_lesson = "Start with high-intent founder vernacular ('building our MVP', 'hiring founding engineer')."
         self.current_archetype_idx = 0
         self.consecutive_zero_yield_count = 0
-        self.last_learned_lesson = "Start with high-intent founder vernacular ('building our MVP', 'hiring founding engineer')."
+        # Learning query engine: the LLM strategist + online learner decide which query runs next;
+        # the fixed archetype logic below stays only as a fallback.
+        from src.agent.mission import DEFAULT_MISSION
+        from src.agent.query_engine import QueryEngine
+        self.engine = QueryEngine(mission or DEFAULT_MISSION, niche=niche, logger=logger,
+                                  builtin=self.ARCHETYPES if not self.custom else None)
 
     @property
     def _anchors(self) -> List[str]:
+        # City / accelerator anchors are US-specific: only used when the mission is US-scoped
+        if self.custom and not self.mission.needs_us:
+            return []
         return self.HIGH_YIELD_US_TECH_HUBS + self.TOP_US_ACCELERATORS
 
     @property
@@ -112,10 +133,13 @@ class StrategicQueryPlanner:
         if total_cards == 0:
             lesson = f"Query '{query}' produced 0 results across 24h & week. Reason: phrasing was too narrow on LinkedIn. Action: Shift to a broader core intent."
             self.record_zero_yield(query)
-        elif categories.get("RECRUITER", 0) >= max(2, int(total_cards * 0.4)):
+        elif self.custom and categories.get("RECRUITER", 0) + categories.get("SELLER", 0) >= max(2, int(total_cards * 0.4)):
+            lesson = f"Query '{query}' was dominated by recruiters/sellers who do not match the mission. Action: use phrasing only the target author would write; shifting pattern."
+            self.shift_pattern("Off-target contamination")
+        elif categories.get("RECRUITER", 0) >= max(2, int(total_cards * 0.4)) and not self.custom:
             lesson = f"Query '{query}' was contaminated by recruiters/staffing agencies ({categories.get('RECRUITER', 0)} cards). Action: Avoid generic hiring terms; use founder-first vernacular like 'building our MVP' or 'recommend a dev shop'."
             self.shift_pattern("Recruiter contamination")
-        elif categories.get("SELLER", 0) >= max(2, int(total_cards * 0.4)):
+        elif categories.get("SELLER", 0) >= max(2, int(total_cards * 0.4)) and not self.custom:
             lesson = f"Query '{query}' attracted competitor dev shops/sellers ({categories.get('SELLER', 0)} cards). Action: Switch to buyer-side phrasing like 'recommend a dev shop' or 'looking for technical cofounder'."
             self.shift_pattern("Seller contamination")
         elif categories.get("BUYER", 0) > 0:
@@ -155,7 +179,7 @@ class StrategicQueryPlanner:
 
     def _generate_candidate_queries(self) -> List[str]:
         """Generates candidates prioritizing the active archetype and rotating hubs."""
-        active_terms = self.ARCHETYPES[self.current_archetype]
+        active_terms = self.archetypes[self.current_archetype]
         candidates = []
         
         # 1. Unanchored core intent phrases (Level 1)
@@ -167,18 +191,31 @@ class StrategicQueryPlanner:
                 candidates.append(f"{anchor} {term}")
 
         # 3. Secondary fallback: include top terms from other archetypes as alternative options
-        for arch_name, terms in self.ARCHETYPES.items():
+        for arch_name, terms in self.archetypes.items():
             if arch_name != self.current_archetype:
                 candidates.extend(terms[:2])
-                for anchor in self.HIGH_YIELD_US_TECH_HUBS[:3]:
+                for anchor in self._anchors[:3]:
                     candidates.append(f"{anchor} {terms[0]}")
 
         return candidates
 
     def get_next_recommended_query(self, already_executed: Optional[set] = None) -> str:
+        done_now = {q.lower().strip() for q in (already_executed or set())}
+        stats = self._stats()
+        recent = {q.lower().strip()[len(self.ns):] for q, st in stats.items()
+                  if q.lower().strip().startswith(self.ns) and self._recent(st) and (self.ns or "::" not in q)}
+        try:
+            pick = self.engine.suggest(skip=done_now | recent)
+        except Exception:
+            pick = ""
+        return pick or self._legacy_next_query(already_executed)
+
+    def _legacy_next_query(self, already_executed: Optional[set] = None) -> str:
         done = {q.lower().strip() for q in (already_executed or set())} | {q["query"].lower().strip() for q in self.executed_queries}
         stats = self._stats()
-        skip = done | {q.lower().strip() for q, st in stats.items() if self._recent(st)}
+        skip = done | {q.lower().strip()[len(self.ns):] for q, st in stats.items()
+                       if q.lower().strip().startswith(self.ns) and self._recent(st)
+                       and (self.ns or "::" not in q)}
         
         candidates = self._generate_candidate_queries()
         fresh = [c for c in candidates if c.lower().strip() not in skip and c.lower().strip() not in done]
@@ -188,13 +225,17 @@ class StrategicQueryPlanner:
             
         # Cycle through all archetypes looking for unexecuted candidates
         for arch_name in self.archetype_order:
-            for term in self.ARCHETYPES[arch_name]:
+            for term in self.archetypes[arch_name]:
                 if term.lower().strip() not in done:
                     return term
-                for anchor in self.HIGH_YIELD_US_TECH_HUBS:
+                for anchor in self._anchors:
                     combo = f"{anchor} {term}"
                     if combo.lower().strip() not in done:
                         return combo
+
+        if self.custom:
+            # Mission queries exhausted: re-run the best phrasing (the tool layer dedupes within a session)
+            return self.archetypes[self.archetype_order[0]][0]
 
         # Last resort fallback: dynamic hub combos guaranteed to never collide
         for hub in ["San Francisco", "Austin", "New York", "Seattle", "Chicago", "Denver", "Boston", "Silicon Valley"]:
@@ -229,7 +270,7 @@ class StrategicQueryPlanner:
                 "recommendation": f"Pivoting strategy: switched archetype to '{next_pattern}'. Recommended query: '{self.get_next_recommended_query()}'."
             }
             
-        if consecutive_non_usa >= 2:
+        if consecutive_non_usa >= 2 and not (self.custom and not self.mission.needs_us):
             return {
                 "action": "bailout_feed",
                 "diagnosis": f"Feed contaminated with {consecutive_non_usa} consecutive international non-US profiles.",

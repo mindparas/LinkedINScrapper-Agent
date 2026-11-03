@@ -51,6 +51,7 @@ class LiveLeadExporter:
             "Buying Intent Signal",
             "Custom Outreach Hook",
             "Reasoning",
+            "Mission",
             "Judge Category",
             "Judge Confidence",
             "Evidence Quote",

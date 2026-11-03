@@ -57,6 +57,28 @@ def load_openai_key():
 
 OPENAI_API_KEY = load_openai_key()
 
+
+def _env_value(name):
+    """Read NAME from the process environment, else from a NAME=value line in .env."""
+    if os.environ.get(name):
+        return os.environ[name].strip()
+    for candidate in [os.path.join(BASE_DIR, ".env"), ".env"]:
+        if os.path.exists(candidate):
+            with open(candidate, "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if line.startswith(name + "="):
+                        return line.split("=", 1)[1].strip().strip('"').strip("'")
+    return ""
+
+
+ANTHROPIC_API_KEY = _env_value("ANTHROPIC_API_KEY")
+
+
+def llm_setting(name, default=""):
+    """LLM_PROVIDER / LLM_MODEL_* style settings: environment first, then .env."""
+    return _env_value(name) or default
+
 # ── Session Logging Setup ─────────────────────────────────────
 def setup_file_logger():
     log_dir = os.path.join(BASE_DIR, "logs")

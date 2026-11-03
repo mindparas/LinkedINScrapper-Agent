@@ -28,6 +28,7 @@ from src.config import Style, setup_file_logger, BASE_DIR, OPENAI_API_KEY
 from src.storage import LiveLeadExporter, AgentMemory
 from src.browser import setup_stealth_driver, verify_or_prompt_login
 from src.agent.runner import run_autonomous_agent
+from src.agent.mission import resolve_mission
 
 
 def parse_arguments():
@@ -51,6 +52,13 @@ def parse_arguments():
         type=str,
         default="custom software & AI MVP engineering",
         help="Agency niche/service offered (default: 'custom software & AI MVP engineering')"
+    )
+    parser.add_argument(
+        "--intent",
+        type=str,
+        default=None,
+        help="Describe the kind of LinkedIn posts you want (free text). The AI interprets it and searches for exactly that. "
+             "Omit to be asked interactively; press ENTER there for the default (US founders needing outsourced engineering)."
     )
     parser.add_argument(
         "--keep-browser",
@@ -102,11 +110,13 @@ def print_leads_summary_table(leads):
 def main():
     display_banner()
 
-    # Pre-flight check: Verify OpenAI API key
-    if not OPENAI_API_KEY:
-        print(f"{Style.RED}❌ Error: OPENAI_API_KEY not found in environment or .env file.{Style.RESET}")
-        print("Please configure your API key in python-agent/.env before running.")
+    # Pre-flight check: the chosen LLM provider needs its API key
+    from src import llm
+    if not llm.api_key_present():
+        print(f"{Style.RED}❌ Error: {llm.key_hint()} not found in environment or .env file (LLM provider: {llm.provider()}).{Style.RESET}")
+        print("Please configure your API key in python-agent/.env before running (set LLM_PROVIDER=openai|anthropic to choose).")
         sys.exit(1)
+    print(f"{Style.DIM}LLM: {llm.describe()}{Style.RESET}")
 
     args = parse_arguments()
 
@@ -138,6 +148,17 @@ def main():
 
     max_duration_seconds = (timeout_minutes * 60) if timeout_minutes > 0 else None
 
+    # Understand what the user wants BEFORE launching a browser (an unusable intent costs nothing)
+    interactive = sys.stdin.isatty()
+    try:
+        mission = resolve_mission(args.intent, niche=args.niche, interactive=interactive)
+    except SystemExit as e:
+        print(f"\n{Style.YELLOW}{e}{Style.RESET}")
+        sys.exit(0)
+    except (ValueError, RuntimeError) as e:
+        print(f"\n{Style.RED}❌ {e}{Style.RESET}")
+        sys.exit(1)
+
     # Always enforce non-interactive autonomous mode
     os.environ["NON_INTERACTIVE"] = "1"
 
@@ -145,6 +166,7 @@ def main():
     print(f"  • Target Leads: {Style.BOLD}{target_leads}{Style.RESET}")
     print(f"  • Max Duration: {Style.BOLD}{f'{timeout_minutes} minutes' if timeout_minutes > 0 else 'Unlimited (until leads found)'}{Style.RESET}")
     print(f"  • Agency Niche: {Style.BOLD}{args.niche}{Style.RESET}")
+    print(f"  • Mission:      {Style.BOLD}{mission.title}{Style.RESET}{'' if not mission.is_default else ' (default)'}")
     print(f"  • Mode:         {Style.CYAN}100% Fully Autonomous (Zero manual input required){Style.RESET}\n")
 
     logger, log_file_path = setup_file_logger()
@@ -163,14 +185,16 @@ def main():
         print(f"\n{Style.BOLD}🤖 Starting Autonomous Lead Search Engine...{Style.RESET}\n")
         start_time = time.time()
 
-        run_autonomous_agent(
+        tools_engine = run_autonomous_agent(
             driver=driver,
             niche=args.niche,
             target_limit=target_leads,
             exporter=exporter,
             memory=memory,
             logger=logger,
-            max_duration_seconds=max_duration_seconds
+            max_duration_seconds=max_duration_seconds,
+            mission=mission,
+            print_report=False
         )
 
         total_elapsed = round((time.time() - start_time) / 60, 1)
@@ -184,6 +208,9 @@ def main():
         print(f"   • Dedicated JSON: {Style.CYAN}{exporter.json_path}{Style.RESET}")
         print(f"   • Latest Pointer: {Style.CYAN}{exporter.current_csv_path}{Style.RESET}")
         print(f"   • Session Log:    {Style.CYAN}{log_file_path}{Style.RESET}\n")
+
+        # High-level performance scorecard for the run
+        print(getattr(tools_engine, "run_report_text", ""))
 
     except Exception as e:
         logger.exception("Fatal error during autonomous lead run:")

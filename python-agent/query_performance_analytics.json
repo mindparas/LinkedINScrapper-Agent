@@ -1,109 +1,109 @@
 {
-  "generated_at": "2026-11-02T23:57:55.993589",
-  "target_limit": 3,
-  "qualified_leads_count": 2,
-  "skipped_cards_count": 112,
-  "total_turns": 43,
+  "generated_at": "2026-11-03T17:13:02.828128",
+  "target_limit": 5,
+  "qualified_leads_count": 0,
+  "skipped_cards_count": 8,
+  "total_turns": 5,
   "recent_executions": [
     {
-      "timestamp": "2026-11-02T23:51:45.075470",
-      "query": "Bay Area building our MVP",
-      "freshness": "past-week",
-      "target_objective": "Early-stage founders seeking technical MVP development partners",
-      "cards_found": 4,
-      "qualified_count": 0,
-      "developer_guidance": "",
-      "outcome": "4 cards inspected, 0 passed full USA founder qualification"
-    },
-    {
-      "timestamp": "2026-11-02T23:52:26.942340",
-      "query": "Bay Area building an MVP",
+      "timestamp": "2026-11-03T16:27:10.445117",
+      "query": "recommend a software agency",
       "freshness": "past-24h",
-      "target_objective": "Early-stage founders seeking technical MVP development partners",
-      "cards_found": 4,
-      "qualified_count": 0,
-      "developer_guidance": "",
-      "outcome": "4 cards inspected, 0 passed full USA founder qualification"
-    },
-    {
-      "timestamp": "2026-11-02T23:52:44.395560",
-      "query": "Bay Area building our v1",
-      "freshness": "both 24h & past-week evaluated",
-      "target_objective": "Early-stage founders seeking technical MVP development partners",
-      "cards_found": 0,
-      "qualified_count": 0,
-      "developer_guidance": "",
-      "outcome": "0 cards returned on LinkedIn (Zero results)"
-    },
-    {
-      "timestamp": "2026-11-02T23:53:48.923550",
-      "query": "hiring our first engineer",
-      "freshness": "past-24h",
-      "target_objective": "Early-stage founders seeking technical MVP development partners",
-      "cards_found": 18,
-      "qualified_count": 0,
-      "developer_guidance": "",
-      "outcome": "18 cards inspected, 0 passed full USA founder qualification"
-    },
-    {
-      "timestamp": "2026-11-02T23:54:06.048034",
-      "query": "San Francisco looking for dev shop",
-      "freshness": "both 24h & past-week evaluated",
-      "target_objective": "Early-stage founders seeking technical MVP development partners",
-      "cards_found": 0,
-      "qualified_count": 0,
-      "developer_guidance": "",
-      "outcome": "0 cards returned on LinkedIn (Zero results)"
-    },
-    {
-      "timestamp": "2026-11-02T23:54:44.372417",
-      "query": "Austin building our MVP",
-      "freshness": "past-week",
-      "target_objective": "Early-stage founders seeking technical MVP development partners",
-      "cards_found": 2,
-      "qualified_count": 0,
-      "developer_guidance": "",
-      "outcome": "2 cards inspected, 0 passed full USA founder qualification"
-    },
-    {
-      "timestamp": "2026-11-02T23:55:38.079756",
-      "query": "looking for technical cofounder",
-      "freshness": "past-24h",
-      "target_objective": "Early-stage founders seeking technical MVP development partners",
-      "cards_found": 6,
-      "qualified_count": 1,
-      "developer_guidance": "",
-      "outcome": "1 genuine lead(s) qualified"
-    },
-    {
-      "timestamp": "2026-11-02T23:56:37.060539",
-      "query": "seeking technical co-founder",
-      "freshness": "past-24h",
-      "target_objective": "Early-stage founders looking for technical co-founders or engineering help.",
-      "cards_found": 9,
-      "qualified_count": 1,
-      "developer_guidance": "",
-      "outcome": "1 genuine lead(s) qualified"
-    },
-    {
-      "timestamp": "2026-11-02T23:57:22.634478",
-      "query": "San Francisco hiring founding engineer",
-      "freshness": "past-24h",
-      "target_objective": "Early-stage founders seeking technical engineering support for MVP development.",
+      "target_objective": "US founders asking for agency recs",
       "cards_found": 12,
       "qualified_count": 0,
       "developer_guidance": "",
       "outcome": "12 cards inspected, 0 passed full USA founder qualification"
     },
     {
-      "timestamp": "2026-11-02T23:57:55.969841",
-      "query": "San Francisco hiring our first engineer",
-      "freshness": "past-24h",
-      "target_objective": "Early-stage founders seeking technical engineering support for MVP development.",
-      "cards_found": 3,
+      "timestamp": "2026-11-03T16:27:31.566346",
+      "query": "San Francisco agency recommendations please",
+      "freshness": "both 24h & past-week evaluated",
+      "target_objective": "US founders asking for agency recs",
+      "cards_found": 0,
       "qualified_count": 0,
       "developer_guidance": "",
-      "outcome": "3 cards inspected, 0 passed full USA founder qualification"
+      "outcome": "0 cards returned on LinkedIn (Zero results)"
+    },
+    {
+      "timestamp": "2026-11-03T16:45:55.056926",
+      "query": "non technical founder",
+      "freshness": "past-24h",
+      "target_objective": "US non-technical founders seeking a dev agency/partner to build MVP or AI product",
+      "cards_found": 21,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "21 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-11-03T16:46:53.843762",
+      "query": "who built your MVP",
+      "freshness": "past-24h",
+      "target_objective": "US founders asking their network for dev agency recommendations to build MVP",
+      "cards_found": 18,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "18 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-11-03T16:48:09.064720",
+      "query": "need a CTO",
+      "freshness": "past-24h",
+      "target_objective": "US founders needing technical partner or outside dev team",
+      "cards_found": 21,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "21 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-11-03T16:48:47.721965",
+      "query": "anyone worked with dev shops",
+      "freshness": "past-24h",
+      "target_objective": "US founders asking network for dev agency recommendations",
+      "cards_found": 1,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "1 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-11-03T16:49:46.228248",
+      "query": "can anyone recommend developers",
+      "freshness": "past-24h",
+      "target_objective": "US founders asking for developer/agency recommendations",
+      "cards_found": 18,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "18 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-11-03T17:11:55.948602",
+      "query": "\"any recommendations for software development companies\"",
+      "freshness": "both 24h & past-week evaluated",
+      "target_objective": "US founders/CEOs/CTOs asking network for dev agency recommendations to build MVP/app/AI product",
+      "cards_found": 0,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "0 cards returned on LinkedIn (Zero results)"
+    },
+    {
+      "timestamp": "2026-11-03T17:12:40.075651",
+      "query": "\"looking for a development partner\"",
+      "freshness": "past-24h",
+      "target_objective": "US founders/CEOs/CTOs seeking dev partner to build MVP/app/AI product",
+      "cards_found": 18,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "18 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-11-03T17:12:57.160543",
+      "query": "\"looking to outsource app development\"",
+      "freshness": "both 24h & past-week evaluated",
+      "target_objective": "US founders seeking outsourced dev for MVP/app/AI",
+      "cards_found": 0,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "0 cards returned on LinkedIn (Zero results)"
     }
   ]
 }

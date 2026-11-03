@@ -5,6 +5,7 @@ from src.config import Style, setup_file_logger, BASE_DIR
 from src.storage import LiveLeadExporter, AgentMemory
 from src.browser import setup_stealth_driver, verify_or_prompt_login
 from src.agent.runner import run_autonomous_agent
+from src.agent.mission import resolve_mission
 
 def main():
     """
@@ -32,6 +33,15 @@ def main():
         except (EOFError, KeyboardInterrupt):
             niche_input = ""
     niche = niche_input if niche_input else "custom software & AI MVP engineering"
+
+    # What kind of posts to find: INTENT env var (non-interactive) or asked here (ENTER = default mission)
+    interactive_mode = os.environ.get("NON_INTERACTIVE", "0") != "1"
+    try:
+        mission = resolve_mission(os.environ.get("INTENT") if not interactive_mode else None,
+                                  niche=niche, interactive=interactive_mode, logger=logger)
+    except (ValueError, RuntimeError) as e:
+        print(f"\n{Style.RED}❌ {e}{Style.RESET}")
+        return
 
     # Search directly until target limit is found (can be specified via TARGET_LIMIT env var)
     target_limit_env = os.environ.get("TARGET_LIMIT")
@@ -64,7 +74,8 @@ def main():
                 target_limit=target_limit,
                 exporter=exporter,
                 memory=memory,
-                logger=logger
+                logger=logger,
+                mission=mission
             )
 
             print(f"\n{Style.GREEN}{Style.BOLD}🎉 ROUND {round_num} COMPLETED!{Style.RESET}")
@@ -101,6 +112,9 @@ def main():
                     new_niche = input(f"\nEnter new agency niche/service (leave empty to keep '{niche}'): ").strip()
                     if new_niche:
                         niche = new_niche
+                    new_intent = input("Describe the posts you want now (ENTER keeps the current mission): ").strip()
+                    if new_intent:
+                        mission = resolve_mission(new_intent, niche=niche, interactive=True, logger=logger)
                     new_count = input(f"Enter target number of additional leads to collect (default: 5): ").strip()
                     if new_count.isdigit() and int(new_count) > 0:
                         target_limit = int(new_count)
