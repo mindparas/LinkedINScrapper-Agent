@@ -52,4 +52,4 @@ Thumbs.db
 **/dataset/labels.jsonl
 
 **/dataset/run_history.jsonl
-**/dataset/query_learning.json
+**/dataset/query_learning*.json

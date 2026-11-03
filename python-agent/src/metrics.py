@@ -220,8 +220,8 @@ class RunMetrics:
             out.append(f"{len(matched)} queries surfaced mission matches, but none passed the location/author checks.")
         if eff["zero_result_search_rate_pct"] >= 25 and srch["searches"] >= 4:
             out.append(f"{eff['zero_result_search_rate_pct']:.0f}% of searches returned nothing - queries may be too narrow.")
-        if eff["duplicate_post_rate_pct"] >= 50:
-            out.append(f"{eff['duplicate_post_rate_pct']:.0f}% of posts were already seen in earlier runs - the fresh supply for this topic is limited.")
+        if eff["duplicate_post_rate_pct"] >= 60:
+            out.append(f"{eff['duplicate_post_rate_pct']:.0f}% of posts were seen in earlier runs, so fresh supply for these queries is limited.")
         if eff["location_pass_rate_pct"] is not None and srch["profile_visits"] >= 3 and eff["location_pass_rate_pct"] < 50:
             out.append(f"Only {eff['location_pass_rate_pct']:.0f}% of profile visits confirmed the required location.")
         if cost["judge_errors"] or cost["agent_llm_errors"]:

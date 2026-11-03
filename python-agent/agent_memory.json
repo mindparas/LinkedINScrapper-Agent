@@ -3840,6 +3840,46 @@
       "qualified_count": 0,
       "developer_guidance": "",
       "outcome": "0 cards returned on LinkedIn (Zero results)"
+    },
+    {
+      "timestamp": "2026-11-03T18:29:21.669825",
+      "query": "looking to outsource development",
+      "freshness": "past-24h",
+      "target_objective": "US founders/CTOs seeking outside engineering help for MVP or product builds",
+      "cards_found": 11,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "11 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-11-03T18:29:38.193134",
+      "query": "building our MVP",
+      "freshness": "past-24h",
+      "target_objective": "Early-stage US founders building an MVP who need technical development partners",
+      "cards_found": 3,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "3 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-11-03T18:32:58.356406",
+      "query": "need extra engineering capacity",
+      "freshness": "past-24h",
+      "target_objective": "US founders/CTOs/VPs with a current engineering capacity gap seeking outside dev help",
+      "cards_found": 15,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "15 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-11-03T18:33:13.379965",
+      "query": "building our MVP",
+      "freshness": "past-24h",
+      "target_objective": "Early-stage US founders building an MVP and needing outside engineering help",
+      "cards_found": 3,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "3 cards inspected, 0 passed full USA founder qualification"
     }
   ],
   "user_feedback_history": [
@@ -5171,7 +5211,37 @@
     "mf81892c7::hafiz nisar ahmed": "2026-11-03T17:12:34.571073",
     "mf81892c7::https://www.linkedin.com/in/hafiznisarahmed": "2026-11-03T17:12:34.571073",
     "mf81892c7::muhammad muaz": "2026-11-03T17:12:36.915260",
-    "mf81892c7::https://www.linkedin.com/in/muhammad-muaz-0006073b2": "2026-11-03T17:12:36.915260"
+    "mf81892c7::https://www.linkedin.com/in/muhammad-muaz-0006073b2": "2026-11-03T17:12:36.915260",
+    "mohammed rizwan": "2026-11-03T18:28:52.922607",
+    "https://www.linkedin.com/in/mohammed-rizwan-3a9039196": "2026-11-03T18:28:52.922607",
+    "madiha mohammadi": "2026-11-03T18:28:52.926664",
+    "https://www.linkedin.com/in/madiha-mohammadi-b25a97423": "2026-11-03T18:28:52.926664",
+    "aliya amreen": "2026-11-03T18:29:00.632765",
+    "https://www.linkedin.com/in/aliya-amreen-1b51a5424": "2026-11-03T18:29:00.632765",
+    "shaik muzammil": "2026-11-03T18:29:00.637067",
+    "https://www.linkedin.com/in/shaik-muzammil-287108416": "2026-11-03T18:29:00.637067",
+    "tarek h.": "2026-11-03T18:29:03.025494",
+    "https://www.linkedin.com/in/tarek-h-b386048b": "2026-11-03T18:29:03.025494",
+    "liza mohanty": "2026-11-03T18:29:05.343909",
+    "https://www.linkedin.com/in/liza-mohanty": "2026-11-03T18:29:05.343909",
+    "bernadetha nzuki": "2026-11-03T18:29:07.898803",
+    "https://www.linkedin.com/in/bernadetha-nzuki-967a47415": "2026-11-03T18:29:07.898803",
+    "gerald erasmus": "2026-11-03T18:29:10.102814",
+    "https://www.linkedin.com/in/gerald-erasmus-ab427295": "2026-11-03T18:29:10.102814",
+    "k r bairwa": "2026-11-03T18:32:27.031524",
+    "https://www.linkedin.com/in/k-r-bairwa-54426735": "2026-11-03T18:32:27.031524",
+    "shivam kumar": "2026-11-03T18:32:27.038684",
+    "https://www.linkedin.com/in/shivam-kumar-mechanical": "2026-11-03T18:32:27.038684",
+    "vinod bahety": "2026-11-03T18:32:31.160015",
+    "https://www.linkedin.com/in/vinodbahetyadanicement": "2026-11-03T18:32:31.160015",
+    "orlando gaete": "2026-11-03T18:32:39.853549",
+    "https://www.linkedin.com/in/orlando-gaete-0429b12": "2026-11-03T18:32:39.853549",
+    "rajesh b": "2026-11-03T18:32:42.178101",
+    "https://www.linkedin.com/in/rajesh-b-30a3108b": "2026-11-03T18:32:42.178101",
+    "zafar ali": "2026-11-03T18:32:47.490329",
+    "https://www.linkedin.com/in/zafar-ali-150207362": "2026-11-03T18:32:47.490329",
+    "jon dalum": "2026-11-03T18:32:54.015498",
+    "https://www.linkedin.com/in/jon-dalum-tlf51431648": "2026-11-03T18:32:54.015498"
   },
   "query_stats": {
     "need an mvp built": {
@@ -5536,12 +5606,12 @@
     },
     "building our mvp": {
       "level": 1,
-      "runs": 2,
+      "runs": 4,
       "posts": 10,
       "buyers": 0,
       "us_buyers": 0,
       "leads": 0,
-      "last_run": "2026-11-02T23:43:20.171367"
+      "last_run": "2026-11-03T18:33:13.385342"
     },
     "building an mvp": {
       "level": 1,
@@ -6352,7 +6422,25 @@
       "us_buyers": 0,
       "leads": 0,
       "last_run": "2026-11-03T17:12:57.172022"
+    },
+    "looking to outsource development": {
+      "level": 1,
+      "runs": 1,
+      "posts": 4,
+      "buyers": 0,
+      "us_buyers": 0,
+      "leads": 0,
+      "last_run": "2026-11-03T18:29:21.673165"
+    },
+    "need extra engineering capacity": {
+      "level": 1,
+      "runs": 1,
+      "posts": 6,
+      "buyers": 0,
+      "us_buyers": 0,
+      "leads": 0,
+      "last_run": "2026-11-03T18:32:58.362232"
     }
   },
-  "last_updated": "2026-11-03T17:12:57.172031"
+  "last_updated": "2026-11-03T18:33:13.385347"
 }

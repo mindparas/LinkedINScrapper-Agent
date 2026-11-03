@@ -144,10 +144,12 @@ class QueryLearner:
 STRATEGIST_PROMPT = """You are the search strategist of an autonomous LinkedIn lead-finding agent. You write the LinkedIn CONTENT-SEARCH queries. Finding the right queries is the whole job: the posts exist, the agent only fails when its queries are wrong.
 
 How LinkedIn content search behaves
-- It matches keywords against the text of posts (newest first when sorted by date). Short natural phrases of 2-4 words work best; long sentences, quotes and boolean operators return nothing or noise.
+- It matches keywords against the text of posts (ranked by relevance by default). Short natural phrases of 2-4 words work best; long sentences, quotes and boolean operators return nothing or noise.
 - Write what the TARGET AUTHOR would literally type in the post, in their voice (first person: "we need", "looking for", "can anyone recommend", "who can build"). Do not write how an analyst would describe the target.
 - Words that sellers, recruiters and marketers use pull THEM instead of buyers (examples: "agency", "services", "solutions", "we help", "hiring", "join our team", "DM me", "expert", "specialist"). Avoid a word when the evidence shows it attracts the wrong authors; keep it only if the post type needs it.
 - EXACT PHRASES are the most precise tool. Unquoted words are matched anywhere in a post, so "need a CTO" returns every post that mentions a CTO. A phrase in quotes must appear in that order, so it returns only posts that literally say it. For the posts that carry the need, set "exact": true and give the 3-6 word wording a buyer would really write ("looking for a development partner", "can anyone recommend a dev shop"). Keep exact phrases SHORT (3-4 words) and very common; long or unusual phrasings return zero posts (in testing, 5-6 word phrases such as "any recommendations for software development companies" returned nothing). Use "exact": false (2-4 plain keywords) for a minority of broader probes. Aim for roughly 70% exact phrases.
+- SITUATIONS beat service words. Buyers often post about a trigger event without naming any service: a developer or agency left or went silent, a project stalled or is behind schedule, just raised funding and need to build, the current vendor failed. Include several such situation phrases (angle names like trigger_event, vendor_failed, stalled_project); they carry no seller vocabulary.
+- Start by avoiding the words "partner", "services", "agency", "solutions" in exact phrases unless the post type truly needs them: they pull sellers.
 - Different authors phrase the same need differently. Cover genuinely different ANGLES (direct ask, recommendation request, project announcement, pain/problem statement, stage signal such as just funded or pre-seed, role or skill wording, introduction request...) and invent others that fit the mission. Do not output near-duplicates.
 - No city or country names; location is checked later on the profile. Avoid contractions and apostrophes (write "do not", not "don't").
 
@@ -212,7 +214,7 @@ class QueryEngine:
         self.mission = mission
         self.logger = logger
         self.enabled = llm_setting("QUERY_ENGINE", "on").lower() != "off"
-        self.stagnation_limit = _int_setting("QUERY_STAGNATION_LIMIT", 9)
+        self.stagnation_limit = _int_setting("QUERY_STAGNATION_LIMIT", 6)
         self.learner = QueryLearner(mission.key if not mission.is_default else "")
         self.strategist = QueryStrategist(mission, niche, logger)
         self.pool = []                 # [{q, angle, why, source}]

@@ -404,7 +404,9 @@ class LinkedInAgentTools:
     def _load_search(self, clean_q, freshness):
         encoded = urllib.parse.quote(clean_q)
         date_param = "%22past-24h%22" if freshness == "past-24h" else "%22past-week%22"
-        url = f"https://www.linkedin.com/search/results/content/?datePosted={date_param}&keywords={encoded}&origin=GLOBAL_SEARCH_HEADER&sortBy=%5B%22date_posted%22%5D"
+        # Default is LinkedIn's relevance ranking; SEARCH_SORT=date forces newest-first.
+        sort_param = "&sortBy=%5B%22date_posted%22%5D" if os.environ.get("SEARCH_SORT", "relevance").lower() == "date" else ""
+        url = f"https://www.linkedin.com/search/results/content/?datePosted={date_param}&keywords={encoded}&origin=GLOBAL_SEARCH_HEADER{sort_param}"
         self.driver.get(url)
         time.sleep(random.uniform(3.5, 4.5))
 
@@ -783,7 +785,7 @@ class LinkedInAgentTools:
 
         card_content = card.get("content", "")
         card_id = card.get("card_id", "")
-        clean_profile_url = (profile_url or card.get("author_url", "")).strip()
+        clean_profile_url = (card.get("author_url") or profile_url or "").strip()
 
         judge = card.get("judge")
         if judge and judge.get("category") != "ERROR":

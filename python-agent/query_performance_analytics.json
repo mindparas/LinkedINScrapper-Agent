@@ -1,50 +1,10 @@
 {
-  "generated_at": "2026-11-03T17:13:02.828128",
-  "target_limit": 5,
+  "generated_at": "2026-11-03T18:33:13.390553",
+  "target_limit": 3,
   "qualified_leads_count": 0,
-  "skipped_cards_count": 8,
-  "total_turns": 5,
+  "skipped_cards_count": 7,
+  "total_turns": 3,
   "recent_executions": [
-    {
-      "timestamp": "2026-11-03T16:27:10.445117",
-      "query": "recommend a software agency",
-      "freshness": "past-24h",
-      "target_objective": "US founders asking for agency recs",
-      "cards_found": 12,
-      "qualified_count": 0,
-      "developer_guidance": "",
-      "outcome": "12 cards inspected, 0 passed full USA founder qualification"
-    },
-    {
-      "timestamp": "2026-11-03T16:27:31.566346",
-      "query": "San Francisco agency recommendations please",
-      "freshness": "both 24h & past-week evaluated",
-      "target_objective": "US founders asking for agency recs",
-      "cards_found": 0,
-      "qualified_count": 0,
-      "developer_guidance": "",
-      "outcome": "0 cards returned on LinkedIn (Zero results)"
-    },
-    {
-      "timestamp": "2026-11-03T16:45:55.056926",
-      "query": "non technical founder",
-      "freshness": "past-24h",
-      "target_objective": "US non-technical founders seeking a dev agency/partner to build MVP or AI product",
-      "cards_found": 21,
-      "qualified_count": 0,
-      "developer_guidance": "",
-      "outcome": "21 cards inspected, 0 passed full USA founder qualification"
-    },
-    {
-      "timestamp": "2026-11-03T16:46:53.843762",
-      "query": "who built your MVP",
-      "freshness": "past-24h",
-      "target_objective": "US founders asking their network for dev agency recommendations to build MVP",
-      "cards_found": 18,
-      "qualified_count": 0,
-      "developer_guidance": "",
-      "outcome": "18 cards inspected, 0 passed full USA founder qualification"
-    },
     {
       "timestamp": "2026-11-03T16:48:09.064720",
       "query": "need a CTO",
@@ -104,6 +64,46 @@
       "qualified_count": 0,
       "developer_guidance": "",
       "outcome": "0 cards returned on LinkedIn (Zero results)"
+    },
+    {
+      "timestamp": "2026-11-03T18:29:21.669825",
+      "query": "looking to outsource development",
+      "freshness": "past-24h",
+      "target_objective": "US founders/CTOs seeking outside engineering help for MVP or product builds",
+      "cards_found": 11,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "11 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-11-03T18:29:38.193134",
+      "query": "building our MVP",
+      "freshness": "past-24h",
+      "target_objective": "Early-stage US founders building an MVP who need technical development partners",
+      "cards_found": 3,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "3 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-11-03T18:32:58.356406",
+      "query": "need extra engineering capacity",
+      "freshness": "past-24h",
+      "target_objective": "US founders/CTOs/VPs with a current engineering capacity gap seeking outside dev help",
+      "cards_found": 15,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "15 cards inspected, 0 passed full USA founder qualification"
+    },
+    {
+      "timestamp": "2026-11-03T18:33:13.379965",
+      "query": "building our MVP",
+      "freshness": "past-24h",
+      "target_objective": "Early-stage US founders building an MVP and needing outside engineering help",
+      "cards_found": 3,
+      "qualified_count": 0,
+      "developer_guidance": "",
+      "outcome": "3 cards inspected, 0 passed full USA founder qualification"
     }
   ]
 }
