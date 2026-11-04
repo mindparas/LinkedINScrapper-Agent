@@ -21,6 +21,9 @@ ROLE_DEFAULTS = {
     "judge":       ("claude-sonnet-5-5", "gpt-4o-mini", "low"),
     "agent":       ("claude-sonnet-5-5", "gpt-4o-mini", "low"),
     "interpreter": ("claude-sonnet-5-5", "gpt-4o-mini", "medium"),
+    # Bulk data collection (collect_posts.py): writes plain search queries only, so the cheapest model is enough.
+    # Override with LLM_MODEL_COLLECTOR.
+    "collector":   ("claude-haiku-5-5", "gpt-4o-mini", "low"),
 }
 
 # USD per 1M tokens (input, output). Estimates for the metrics report; edit if prices change.
